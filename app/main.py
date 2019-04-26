@@ -2,8 +2,9 @@ import json
 import os
 import random
 import bottle
-
+import brain
 from api import ping_response, start_response, move_response, end_response
+import time
 
 @bottle.route('/')
 def index():
@@ -48,18 +49,23 @@ def start():
 
 @bottle.post('/move')
 def move():
+    start = time.time()
     data = bottle.request.json
 
     """
     TODO: Using the data from the endpoint request object, your
             snake AI must choose a direction to move in.
     """
-    print(json.dumps(data))
+    #print(json.dumps(data))
 
-    directions = ['up', 'down', 'left', 'right']
-    direction = random.choice(directions)
+    #directions = ['up', 'down', 'left', 'right']
+    #direction = random.choice(directions)
 
-    return move_response(direction)
+    moveResponse = brain.main(data)
+
+    print(time.time()-start)
+
+    return move_response(moveResponse)
 
 
 @bottle.post('/end')
