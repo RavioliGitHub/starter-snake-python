@@ -49,7 +49,7 @@ def start():
 
 @bottle.post('/move')
 def move():
-    start = time.time()
+    startTime = time.time()
     data = bottle.request.json
 
     """
@@ -58,12 +58,9 @@ def move():
     """
     #print(json.dumps(data))
 
-    #directions = ['up', 'down', 'left', 'right']
-    #direction = random.choice(directions)
-
     moveResponse = brain.main(data)
 
-    print(time.time()-start)
+    print(time.time()-startTime)
 
     return move_response(moveResponse)
 
