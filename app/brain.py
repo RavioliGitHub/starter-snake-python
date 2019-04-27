@@ -35,28 +35,49 @@ def main(data):
         for e in snake['body']:
             deadly_locations.append((e['x'], e['y']))
 
-    elements = [game, game_id, turn, board, height, width, food, you_head, food_locations, deadly_locations]
+    enemy_heads = []
+    for snake in snakes:
+        enemy_heads.append(snake['body'][0])
+    enemy_heads.remove(you_head)
+
     directions = ['up', 'down', 'left', 'right']
-    possibleDirections = ['up', 'down', 'left', 'right']
+    possible_head_on_head_collision = []
+    for head in enemy_heads:
+        for d in directions:
+            possible_head_on_head_collision.append(nextField(d, head))
+
+    elements = [game, game_id, turn, board, height, width, food, you_head, food_locations, deadly_locations]
+
+    directions_without_direct_death = ['up', 'down', 'left', 'right']
 
     if you_head['x'] == 0:
-        possibleDirections.remove('left')
+        directions_without_direct_death.remove('left')
     if you_head['x'] == width-1:
-        possibleDirections.remove('right')
+        directions_without_direct_death.remove('right')
     if you_head['y'] == 0:
-        possibleDirections.remove('up')
+        directions_without_direct_death.remove('up')
     if you_head['y'] == height-1:
-        possibleDirections.remove('down')
+        directions_without_direct_death.remove('down')
 
     for d in directions:
         nextTile = nextField(d, you_head)
         if deadly_locations.__contains__(nextTile):
-            possibleDirections.remove(d)
-            continue
-        if food_locations.__contains__(nextTile):
-            return d
+            directions_without_direct_death.remove(d)
 
-    direction = random.choice(possibleDirections)
+    directions_without_head_on_head_collision = []
+    for d in directions_without_direct_death:
+        nextTile = nextField(d, you_head)
+        if not possible_head_on_head_collision.__contains__(nextTile):
+            directions_without_head_on_head_collision.append(d)
+
+    if directions_without_head_on_head_collision:
+        for d in directions_without_head_on_head_collision:
+            nextTile = nextField(d, you_head)
+            if food_locations.__contains__(nextTile):
+                return d
+        return random.choice(directions_without_head_on_head_collision)
+
+    direction = random.choice(directions_without_direct_death)
 
     return direction
 
