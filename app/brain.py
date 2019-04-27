@@ -114,15 +114,15 @@ def main(data):
             reachableTiles = reachable(nextTile, deadly_locations, width, height)
             numberOfReachableTiles.append(len(reachableTiles))
 
-    while len(numberOfReachableTiles) < 3:
-        numberOfReachableTiles.append(-1)
+        while len(numberOfReachableTiles) < 3:
+            numberOfReachableTiles.append(-1)
 
-    for i in range(3):
-        cur = numberOfReachableTiles[i]
-        prev = numberOfReachableTiles[(i-1) % 3]
-        next = numberOfReachableTiles[(i+1) % 3]
-        if cur >= prev and cur >= next:
-            directions_with_most_space.append(directions_without_head_on_head_collision[i])
+        for i in range(3):
+            cur = numberOfReachableTiles[i]
+            prev = numberOfReachableTiles[(i-1) % 3]
+            next = numberOfReachableTiles[(i+1) % 3]
+            if cur >= prev and cur >= next:
+                directions_with_most_space.append(directions_without_head_on_head_collision[i])
 
     if directions_with_most_space:
         for d in directions_with_most_space:
