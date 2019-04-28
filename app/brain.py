@@ -23,14 +23,14 @@ def nextFieldWithTupel(direction, currentPosition):
     elif direction is 'right':
         return currentPosition[0] + 1, currentPosition[1]
 
-def legit(goal, deadly_locations, width, height):
+def not_deadly_location_on_board(goal, deadly_locations, width, height):
     if goal[0] < 0 or goal[0] >= width or goal[1] < 0 or goal[1] >= height:
         return False
     if deadly_locations.__contains__(goal):
         return False
     return True
 
-def reachable(start, deadly_locations, width, height):
+def list_of_reachable_tiles(start, deadly_locations, width, height):
     visited = []
     queue = [start]
 
@@ -40,7 +40,7 @@ def reachable(start, deadly_locations, width, height):
         for d in directions:
             curNeighbour = nextFieldWithTupel(d, cur)
             if not visited.__contains__(curNeighbour) and not queue.__contains__(curNeighbour):
-                if legit(curNeighbour, deadly_locations, width, height):
+                if not_deadly_location_on_board(curNeighbour, deadly_locations, width, height):
                     queue.append(curNeighbour)
 
     return visited
@@ -109,30 +109,31 @@ def main(data):
     directions_with_most_space = []
     numberOfReachableTiles = []
     if directions_without_head_on_head_collision:
-        for d in directions_without_head_on_head_collision:
-            nextTile = nextField(d, you_head)
-            reachableTiles = reachable(nextTile, deadly_locations, width, height)
-            numberOfReachableTiles.append(len(reachableTiles))
+        list_to_iterate = directions_without_head_on_head_collision
+    else:
+        list_to_iterate = directions_without_direct_death
 
-        while len(numberOfReachableTiles) < 3:
-            numberOfReachableTiles.append(-1)
+    for d in list_to_iterate:
+        nextTile = nextField(d, you_head)
+        reachableTiles = list_of_reachable_tiles(nextTile, deadly_locations, width, height)
+        numberOfReachableTiles.append(len(reachableTiles))
 
-        for i in range(3):
-            cur = numberOfReachableTiles[i]
-            prev = numberOfReachableTiles[(i-1) % 3]
-            next = numberOfReachableTiles[(i+1) % 3]
-            if cur >= prev and cur >= next:
-                directions_with_most_space.append(directions_without_head_on_head_collision[i])
+    while len(numberOfReachableTiles) < 3:
+        numberOfReachableTiles.append(-1)
 
-    if directions_with_most_space:
-        for d in directions_with_most_space:
-            nextTile = nextField(d, you_head)
-            if food_locations.__contains__(nextTile):
-                return d
-        return random.choice(directions_with_most_space)
+    for i in range(3):
+        cur = numberOfReachableTiles[i]
+        prev = numberOfReachableTiles[(i-1) % 3]
+        next = numberOfReachableTiles[(i+1) % 3]
+        if cur >= prev and cur >= next:
+            directions_with_most_space.append(list_to_iterate[i])
 
-    direction = random.choice(directions_without_direct_death)
-    return direction
+    for d in directions_with_most_space:
+        nextTile = nextField(d, you_head)
+        if food_locations.__contains__(nextTile):
+            return d
+    return random.choice(directions_with_most_space)
+
 
 """
 current_milli_time = lambda: int(round(time.time() * 1000))
