@@ -28,7 +28,7 @@ def check_if_update_was_accurate(prediction, actual_data):
     b = actual_data_copy
     result = [(k, a[k], b[k]) for k in a if k in b and a[k] != b[k]]
     pp = pprint.PrettyPrinter(indent=4)
-    print("result")
+    # print("result")
     pp.pprint(result)
     assert prediction_copy == actual_data_copy
 
@@ -126,7 +126,6 @@ def update(original_data, moves):
     # Reduce health
     for snake in snakes:
         snake['health'] = snake['health']-1
-    print('MIDDLE ### \n',  updated_data)
 
     # Check if the snake ate and adjust health
     for snake in snakes:

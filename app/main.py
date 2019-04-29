@@ -57,8 +57,9 @@ def move():
     startTime = time.time()
     data = bottle.request.json
 
-    if data['turn'] > 0:
-        game_engine.check_if_update_was_accurate(previous_data_prediction, data)
+    #if data['turn'] > 0:
+       # game_engine.check_if_update_was_accurate(previous_data_prediction, data)
+
 
     """
     TODO: Using the data from the endpoint request object, your
@@ -69,10 +70,6 @@ def move():
     moveResponse = brain.main(data)
 
     previous_data_prediction = game_engine.update(data, [moveResponse])
-
-    game_engine.printBoard(previous_data_prediction)
-    print(previous_data_prediction)
-
 
     print(time.time()-startTime)
 
