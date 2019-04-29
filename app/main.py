@@ -3,9 +3,12 @@ import os
 import random
 import bottle
 import brain
+import game_engine
 from api import ping_response, start_response, move_response, end_response
 import time
 
+
+previous_data_prediction = "f"
 @bottle.route('/')
 def index():
     return '''
@@ -35,6 +38,7 @@ def ping():
 def start():
     data = bottle.request.json
 
+
     """
     TODO: If you intend to have a stateful snake AI,
             initialize your snake state here using the
@@ -49,8 +53,12 @@ def start():
 
 @bottle.post('/move')
 def move():
+    global previous_data_prediction
     startTime = time.time()
     data = bottle.request.json
+
+    if data['turn'] > 0:
+        game_engine.check_if_update_was_accurate(previous_data_prediction, data)
 
     """
     TODO: Using the data from the endpoint request object, your
@@ -59,6 +67,12 @@ def move():
     #print(json.dumps(data))
 
     moveResponse = brain.main(data)
+
+    previous_data_prediction = game_engine.update(data, [moveResponse])
+
+    game_engine.printBoard(previous_data_prediction)
+    print(previous_data_prediction)
+
 
     print(time.time()-startTime)
 
