@@ -67,7 +67,7 @@ def move():
     """
     #print(json.dumps(data))
 
-    moveResponse = brain.main(data)
+    moveResponse = brain.get_best_move(data)
 
     previous_data_prediction = game_engine.update(data, [moveResponse])
 
