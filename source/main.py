@@ -89,7 +89,7 @@ def end():
 
     return end_response()
 
-# Expose WSGI app (so gunicorn can find it)
+# Expose WSGI source (so gunicorn can find it)
 application = bottle.default_app()
 
 if __name__ == '__main__':
