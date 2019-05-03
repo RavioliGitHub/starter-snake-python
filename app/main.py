@@ -3,8 +3,7 @@ import os
 import random
 import bottle
 from app import game_engine
-import api
-# from api import ping_response, start_response, move_response, end_response
+from api import ping_response, start_response, move_response, end_response
 import time
 import sys
 from app import brain
@@ -34,7 +33,7 @@ def ping():
     A keep-alive endpoint used to prevent cloud application platforms,
     such as Heroku, from sleeping the application instance.
     """
-    return api.ping_response()
+    return ping_response()
 
 @bottle.post('/start')
 def start():
@@ -50,7 +49,7 @@ def start():
 
     color = "#00FF00"
 
-    return api.start_response(color)
+    return start_response(color)
 
 
 @bottle.post('/move')
@@ -75,7 +74,7 @@ def move():
 
     print(time.time()-startTime)
 
-    return api.move_response(moveResponse)
+    return move_response(moveResponse)
 
 
 @bottle.post('/end')
@@ -88,7 +87,7 @@ def end():
     """
     print(json.dumps(data))
 
-    return api.end_response()
+    return end_response()
 
 # Expose WSGI app (so gunicorn can find it)
 application = bottle.default_app()
