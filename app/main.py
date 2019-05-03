@@ -6,6 +6,7 @@ import brain
 import game_engine
 from api import ping_response, start_response, move_response, end_response
 import time
+import sys
 
 
 previous_data_prediction = "f"
@@ -92,9 +93,13 @@ def end():
 application = bottle.default_app()
 
 if __name__ == '__main__':
+    print(str(sys.argv))
+    port = 8080
+    if len(sys.argv) == 2:
+        port += int(sys.argv[1])
     bottle.run(
         application,
         host=os.getenv('IP', '0.0.0.0'),
-        port=os.getenv('PORT', '8080'),
+        port=os.getenv('PORT', str(port)),
         debug=os.getenv('DEBUG', True)
     )

@@ -13,6 +13,16 @@ After all the snakes have returned their move decision the engine will, for each
     Check if food needs to be spawned. (see Food Spawn Rules)
 
 """
+directions = ['up', 'down', 'left', 'right']
+def nextField(direction, currentPosition):
+    if direction is 'up':
+        return {'x': currentPosition['x'], 'y': currentPosition['y'] - 1}
+    elif direction is 'down':
+        return {'x': currentPosition['x'], 'y': currentPosition['y'] + 1}
+    elif direction is 'left':
+        return {'x': currentPosition['x'] - 1, 'y': currentPosition['y']}
+    elif direction is 'right':
+        return {'x': currentPosition['x'] + 1, 'y': currentPosition['y']}
 
 def check_if_update_was_accurate(prediction, actual_data):
     prediction_copy = copy.deepcopy(prediction)
@@ -32,7 +42,112 @@ def check_if_update_was_accurate(prediction, actual_data):
     pp.pprint(result)
     assert prediction_copy == actual_data_copy
 
+def get_unicode(pre, next):
+    if pre is 'up':
+        if next is 'down':
+            return u'\u2551'
+        if next is 'right':
+            return u'\u255A'
+        if next is 'left':
+            return u'\u255D'
+    if pre is 'left':
+        if next is 'down':
+            return u'\u2557'
+        if next is 'right':
+            return u'\u2550'
+    if pre is 'down':
+        if next is 'right':
+            return u'\u2554'
+    return get_unicode(next, pre)
+
 def printBoard(data):
+    right = u'\u23E9'
+    left = u'\u23EA'
+    up = u'\u23EB'
+    down = u'\u23EC'
+    for i in range(256):
+        print(chr(i), end=' ')
+    turn = data['turn']
+    board = data['board']
+    height = board['height']
+    width = board['width']
+    food_locations = board['food']
+    snakes = board['snakes']
+    board_data = []
+
+    print(u'\u25A0')
+    print(up, down, left, right)
+
+    for x in range(width):
+        board_data.append([])
+        for y in range(height):
+            board_data[x].append(' ')
+
+    for food in food_locations:
+        board_data[food['x']][food['y']] = 'F'
+
+    for i, snake in zip(range(len(snakes)), snakes):
+        head = snake['body'][0]
+        tail = snake['body'][-1]
+        board_data[head['x']][head['y']] = "H"
+        board_data[tail['x']][tail['y']] = "T"
+        for body_part, index in zip(snake['body'], range(len(snake['body']))):
+            if index != 0 and index != len(snake['body'])-1:
+                for d in directions:
+                    if nextField(d, snake['body'][index]) == snake['body'][index-1]:
+                        pre = d
+                    if nextField(d, snake['body'][index]) == snake['body'][index+1]:
+                        next = d
+
+                print(pre, next)
+                board_data[body_part['x']][body_part['y']] = get_unicode(pre, next)
+
+    print('\n')
+    print("TURN", turn)
+    print('\n'.join([''.join(['{:3}'.format(item) for item in row])
+                     for row in board_data]))
+    print('\n')
+"""
+def printBoard(data):
+    right = u'\u23E9'
+    left = u'\u23EA'
+    up = u'\u23EB'
+    down = u'\u23EC'
+    for i in range(256):
+        print(chr(i), end=' ')
+    turn = data['turn']
+    board = data['board']
+    height = board['height']
+    width = board['width']
+    food_locations = board['food']
+    snakes = board['snakes']
+    board_data = []
+
+    print(u'\u25A0')
+    print(up, down, left, right)
+
+    for x in range(width):
+        board_data.append([])
+        for y in range(height):
+            board_data[x].append(' ')
+
+    for food in food_locations:
+        board_data[food['x']][food['y']] = 'F'
+
+    for i, snake in zip(range(len(snakes)), snakes):
+        for body_part in snake['body']:
+            board_data[body_part['x']][body_part['y']] = up
+
+    print('\n')
+    print("TURN", turn)
+    print('\n'.join([''.join(['{:3}'.format(item) for item in row])
+                     for row in board_data]))
+    print('\n')
+"""
+"""
+def printBoard(data):
+    for i in range(256):
+        print(chr(i))
     turn = data['turn']
     board = data['board']
     height = board['height']
@@ -53,23 +168,38 @@ def printBoard(data):
         for body_part in snake['body']:
             board_data[body_part['x']][body_part['y']] = i
 
+    prettyBoard = []
+    for y in range(height*3):
+        prettyBoard.append([])
+        for x in range(width*3):
+            # prettyBoard[y].append("\033[4m| \033[0m")
+            prettyBoard[y].append(" ")
+    # work with 3 *3 fields, wifdth
+    for x in range(len(prettyBoard)):
+        if x == 0 or x == width*3+1:
+            for y in range(len(prettyBoard[0])):
+                prettyBoard[y][x] = y
+
+    for y in range(len(prettyBoard[0])):
+        if y == 0 or y == len(prettyBoard[0])-1:
+            for x in range(len(prettyBoard)):
+                prettyBoard[y][x] = int(x/3)
+
+
+
+
     print('\n')
     print("TURN", turn)
-    print('\n'.join([''.join(['{:4}'.format(item) for item in row])
+    print('\n'.join([''.join(['{:1}'.format(item) for item in row])
                      for row in board_data]))
     print('\n')
+    print('\n'.join([''.join(['{:3}'.format(item) for item in row])
+                     for row in prettyBoard]))
+
+    print("\033[4mhello\033[0m")
+"""
 
 
-directions = ['up', 'down', 'left', 'right']
-def nextField(direction, currentPosition):
-    if direction is 'up':
-        return {'x': currentPosition['x'], 'y': currentPosition['y'] - 1}
-    elif direction is 'down':
-        return {'x': currentPosition['x'], 'y': currentPosition['y'] + 1}
-    elif direction is 'left':
-        return {'x': currentPosition['x'] - 1, 'y': currentPosition['y']}
-    elif direction is 'right':
-        return {'x': currentPosition['x'] + 1, 'y': currentPosition['y']}
 
 def nextFieldWithTupel(direction, currentPosition):
     if direction is 'up':
@@ -181,4 +311,5 @@ def update(original_data, moves):
             you['body'] = snake['body']
 
     return updated_data
+
 
