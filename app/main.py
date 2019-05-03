@@ -2,11 +2,12 @@ import json
 import os
 import random
 import bottle
-from app import game_engine
+import brain
+import game_engine
 from api import ping_response, start_response, move_response, end_response
 import time
 import sys
-from app import brain
+
 
 
 previous_data_prediction = "f"
