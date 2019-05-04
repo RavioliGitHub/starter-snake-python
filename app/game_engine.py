@@ -245,8 +245,8 @@ def update(original_data, moves):
     board = updated_data['board']
     height = board['height']
     width = board['width']
-    food_locations: list = board['food']
-    snakes: list = board['snakes']
+    food_locations = board['food']
+    snakes = board['snakes']
     you = updated_data['you']
     you_head = you['body'][0]
 
