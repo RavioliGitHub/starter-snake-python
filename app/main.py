@@ -2,11 +2,8 @@ import json
 import os
 import random
 import bottle
-import brain
-import game_engine
-from api import ping_response, start_response, move_response, end_response
-import time
 
+from api import ping_response, start_response, move_response, end_response
 
 @bottle.route('/')
 def index():
@@ -37,7 +34,6 @@ def ping():
 def start():
     data = bottle.request.json
 
-
     """
     TODO: If you intend to have a stateful snake AI,
             initialize your snake state here using the
@@ -52,27 +48,18 @@ def start():
 
 @bottle.post('/move')
 def move():
-    #global previous_data_prediction
-    startTime = time.time()
     data = bottle.request.json
-
-    #if data['turn'] > 0:
-       # game_engine.check_if_update_was_accurate(previous_data_prediction, data)
-
 
     """
     TODO: Using the data from the endpoint request object, your
             snake AI must choose a direction to move in.
     """
-    #print(json.dumps(data))
+    print(json.dumps(data))
 
-    moveResponse = brain.get_best_move(data)
+    directions = ['up', 'down', 'left', 'right']
+    direction = random.choice(directions)
 
-    #previous_data_prediction = game_engine.update(data, [moveResponse])
-
-    print(time.time()-startTime)
-
-    return move_response(moveResponse)
+    return move_response(direction)
 
 
 @bottle.post('/end')
@@ -87,17 +74,13 @@ def end():
 
     return end_response()
 
-# Expose WSGI source (so gunicorn can find it)
+# Expose WSGI app (so gunicorn can find it)
 application = bottle.default_app()
 
 if __name__ == '__main__':
-    #print(str(sys.argv))
-    port = 8080
-    #if len(sys.argv) == 2:
-        #port += int(sys.argv[1])
     bottle.run(
         application,
         host=os.getenv('IP', '0.0.0.0'),
-        port=os.getenv('PORT', str(port)),
+        port=os.getenv('PORT', '8080'),
         debug=os.getenv('DEBUG', True)
     )
