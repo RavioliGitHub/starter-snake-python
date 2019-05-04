@@ -1,3 +1,3 @@
-import brain
-import api
-import game_engine
+from source import brain
+from source import api
+from source import game_engine
