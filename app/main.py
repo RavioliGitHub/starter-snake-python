@@ -3,8 +3,12 @@ import os
 import random
 import bottle
 import brain
+import game_engine
+import time
 from api import ping_response, start_response, move_response, end_response
 
+
+previous_data_prediction = "f"
 @bottle.route('/')
 def index():
     return '''
@@ -48,16 +52,18 @@ def start():
 
 @bottle.post('/move')
 def move():
+    global previous_data_prediction
+    startTime = time.time()
     data = bottle.request.json
 
-    """
-    TODO: Using the data from the endpoint request object, your
-            snake AI must choose a direction to move in.
-    """
+    if data['turn'] > 0:
+        game_engine.check_if_update_was_accurate(previous_data_prediction, data)
 
-    best = brain.get_best_move(data)
+    moveResponse = brain.get_best_move(data)
 
-    return move_response(best)
+    previous_data_prediction = game_engine.update(data, [moveResponse])
+    print(time.time() - startTime)
+    return move_response(moveResponse)
 
 
 @bottle.post('/end')
