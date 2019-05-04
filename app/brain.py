@@ -2,7 +2,6 @@ import random
 import json
 import time
 from operator import itemgetter
-#from typing import List
 
 directions = ['up', 'down', 'left', 'right']
 
@@ -65,7 +64,7 @@ def get_deadly_locations(data):
     return deadly_locations
 
 
-def get_moves_without_direct_death(data):  # -> List[str]: # starvation not included
+def get_moves_without_direct_death(data):
     board = data['board']
     height = board['height']
     width = board['width']
@@ -93,7 +92,7 @@ def get_moves_without_direct_death(data):  # -> List[str]: # starvation not incl
     return directions_without_direct_death
 
 
-def get_moves_without_potential_deadly_head_on_head_collision(data, directions_without_direct_death):  # -> List[str]:
+def get_moves_without_potential_deadly_head_on_head_collision(data, directions_without_direct_death):
     board = data['board']
     snakes = board['snakes']
     you = data['you']
@@ -118,7 +117,7 @@ def get_moves_without_potential_deadly_head_on_head_collision(data, directions_w
     return directions_without_deadly_head_on_head_collision
 
 
-def get_least_constraining_moves(data, directions_without_direct_death):  # -> List[str]:
+def get_least_constraining_moves(data, directions_without_direct_death):
     board = data['board']
     height = board['height']
     width = board['width']
@@ -146,7 +145,7 @@ def get_least_constraining_moves(data, directions_without_direct_death):  # -> L
     return directions_with_most_space
 
 
-def get_moves_that_directly_lead_to_food(data):  # -> List[str]:
+def get_moves_that_directly_lead_to_food(data):
     board = data['board']
     food = board['food']
     you = data['you']
