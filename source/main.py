@@ -8,8 +8,6 @@ from api import ping_response, start_response, move_response, end_response
 import time
 
 
-
-previous_data_prediction = "f"
 @bottle.route('/')
 def index():
     return '''
@@ -54,7 +52,7 @@ def start():
 
 @bottle.post('/move')
 def move():
-    global previous_data_prediction
+    #global previous_data_prediction
     startTime = time.time()
     data = bottle.request.json
 
@@ -70,7 +68,7 @@ def move():
 
     moveResponse = brain.get_best_move(data)
 
-    previous_data_prediction = game_engine.update(data, [moveResponse])
+    #previous_data_prediction = game_engine.update(data, [moveResponse])
 
     print(time.time()-startTime)
 
