@@ -2,7 +2,7 @@ import json
 import os
 import random
 import bottle
-
+import brain
 from api import ping_response, start_response, move_response, end_response
 
 @bottle.route('/')
