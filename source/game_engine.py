@@ -42,6 +42,7 @@ def check_if_update_was_accurate(prediction, actual_data):
     pp.pprint(result)
     assert prediction_copy == actual_data_copy
 
+"""
 def get_unicode(pre, next):
     if pre is 'up':
         if next is 'down':
@@ -107,6 +108,7 @@ def printBoard(data):
     print('\n'.join([''.join(['{:3}'.format(item) for item in row])
                      for row in board_data]))
     print('\n')
+"""
 """
 def printBoard(data):
     right = u'\u23E9'
