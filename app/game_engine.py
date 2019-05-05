@@ -151,9 +151,7 @@ def check_if_update_was_accurate(prediction, actual_data):
     del prediction_copy['board']['food']
     del actual_data_copy['board']['food']
     assert len(prediction_copy) == len(actual_data_copy), "not same length"
-    for key in prediction_copy:
-        print()
-    compare_elements(prediction_copy, actual_data_copy)
+    #compare_elements(prediction_copy, actual_data_copy)
 
     if not prediction_copy == actual_data_copy:
         pretty_print_diff(prediction_copy, actual_data_copy)
