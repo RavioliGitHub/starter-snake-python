@@ -159,6 +159,9 @@ def list_of_reachable_tiles(start, deadly_locations, width, height):
     return visited
 
 def get_played_moves(previous_data, current_data):
+    assert type(previous_data) is dict, previous_data
+    assert type(current_data) is dict, current_data
+    assert type(previous_data['board']['snakes']) is list, previous_data['board']['snakes']
     moves = []
     current_snakes = current_data['board']['snakes']
     for pre_snake in previous_data['board']['snakes']:
