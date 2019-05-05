@@ -37,7 +37,9 @@ def ping():
 
 @bottle.post('/start')
 def start():
+    global previous_data
     data = bottle.request.json
+    previous_data = data
 
     """
     TODO: If you intend to have a stateful snake AI,
@@ -77,6 +79,8 @@ def move():
 
 @bottle.post('/end')
 def end():
+    global previous_data
+    previous_data = "f"
     data = bottle.request.json
 
     """
