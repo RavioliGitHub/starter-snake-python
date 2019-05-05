@@ -60,6 +60,7 @@ def move():
     print('turn:', data['turn'])
 
     if data['turn'] > 0 and previous_data is not "f" and len(data['board']['snakes'][0]['body']) > 1:
+        print('check_prediction')
         played_moves = game_engine.get_played_moves(previous_data, data)
         previous_data_prediction = game_engine.update(previous_data, played_moves)
         game_engine.check_if_update_was_accurate(previous_data_prediction, data)
