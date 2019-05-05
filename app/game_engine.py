@@ -14,7 +14,7 @@ After all the snakes have returned their move decision the engine will, for each
 
 """
 directions = ['up', 'down', 'left', 'right']
-def nextField(direction, currentPosition):
+def next_field(direction, currentPosition):
     if direction is 'up':
         return {'x': currentPosition['x'], 'y': currentPosition['y'] - 1}
     elif direction is 'down':
@@ -24,132 +24,21 @@ def nextField(direction, currentPosition):
     elif direction is 'right':
         return {'x': currentPosition['x'] + 1, 'y': currentPosition['y']}
 
-def check_if_update_was_accurate(prediction, actual_data):
-    prediction_copy = copy.deepcopy(prediction)
-    actual_data_copy = copy.deepcopy(actual_data)
-    del prediction_copy['board']['food']
-    del actual_data_copy['board']['food']
-    assert len(prediction_copy) == len(actual_data_copy), "not same length"
-    for pred, act in zip(prediction_copy, actual_data_copy):
-        if pred != act:
-            print(pred, act, prediction_copy[pred], actual_data_copy[act])
 
-    a = prediction_copy
-    b = actual_data_copy
-    result = [(k, a[k], b[k]) for k in a if k in b and a[k] != b[k]]
-    pp = pprint.PrettyPrinter(indent=4)
-    # print("result")
-    pp.pprint(result)
-    assert prediction_copy == actual_data_copy
 
-"""
-def get_unicode(pre, next):
-    if pre is 'up':
-        if next is 'down':
-            return u'\u2551'
-        if next is 'right':
-            return u'\u255A'
-        if next is 'left':
-            return u'\u255D'
-    if pre is 'left':
-        if next is 'down':
-            return u'\u2557'
-        if next is 'right':
-            return u'\u2550'
-    if pre is 'down':
-        if next is 'right':
-            return u'\u2554'
-    return get_unicode(next, pre)
+def compare_elements(pre, act):
+    if type(pre) is dict:
+        for key in pre:
+            compare_elements(pre[key], act[key])
+    elif type(pre) is list:
+        for pre_el, act_el in zip(pre, act):
+            compare_elements(pre_el, act_el)
+    else:
+
+        if pre != act:
+            print("diff", pre, act)
 
 def printBoard(data):
-    right = u'\u23E9'
-    left = u'\u23EA'
-    up = u'\u23EB'
-    down = u'\u23EC'
-    for i in range(256):
-        print(chr(i), end=' ')
-    turn = data['turn']
-    board = data['board']
-    height = board['height']
-    width = board['width']
-    food_locations = board['food']
-    snakes = board['snakes']
-    board_data = []
-
-    print(u'\u25A0')
-    print(up, down, left, right)
-
-    for x in range(width):
-        board_data.append([])
-        for y in range(height):
-            board_data[x].append(' ')
-
-    for food in food_locations:
-        board_data[food['x']][food['y']] = 'F'
-
-    for i, snake in zip(range(len(snakes)), snakes):
-        head = snake['body'][0]
-        tail = snake['body'][-1]
-        board_data[head['x']][head['y']] = "H"
-        board_data[tail['x']][tail['y']] = "T"
-        for body_part, index in zip(snake['body'], range(len(snake['body']))):
-            if index != 0 and index != len(snake['body'])-1:
-                for d in directions:
-                    if nextField(d, snake['body'][index]) == snake['body'][index-1]:
-                        pre = d
-                    if nextField(d, snake['body'][index]) == snake['body'][index+1]:
-                        next = d
-
-                print(pre, next)
-                board_data[body_part['x']][body_part['y']] = get_unicode(pre, next)
-
-    print('\n')
-    print("TURN", turn)
-    print('\n'.join([''.join(['{:3}'.format(item) for item in row])
-                     for row in board_data]))
-    print('\n')
-"""
-"""
-def printBoard(data):
-    right = u'\u23E9'
-    left = u'\u23EA'
-    up = u'\u23EB'
-    down = u'\u23EC'
-    for i in range(256):
-        print(chr(i), end=' ')
-    turn = data['turn']
-    board = data['board']
-    height = board['height']
-    width = board['width']
-    food_locations = board['food']
-    snakes = board['snakes']
-    board_data = []
-
-    print(u'\u25A0')
-    print(up, down, left, right)
-
-    for x in range(width):
-        board_data.append([])
-        for y in range(height):
-            board_data[x].append(' ')
-
-    for food in food_locations:
-        board_data[food['x']][food['y']] = 'F'
-
-    for i, snake in zip(range(len(snakes)), snakes):
-        for body_part in snake['body']:
-            board_data[body_part['x']][body_part['y']] = up
-
-    print('\n')
-    print("TURN", turn)
-    print('\n'.join([''.join(['{:3}'.format(item) for item in row])
-                     for row in board_data]))
-    print('\n')
-"""
-"""
-def printBoard(data):
-    for i in range(256):
-        print(chr(i))
     turn = data['turn']
     board = data['board']
     height = board['height']
@@ -170,37 +59,69 @@ def printBoard(data):
         for body_part in snake['body']:
             board_data[body_part['x']][body_part['y']] = i
 
-    prettyBoard = []
-    for y in range(height*3):
-        prettyBoard.append([])
-        for x in range(width*3):
-            # prettyBoard[y].append("\033[4m| \033[0m")
-            prettyBoard[y].append(" ")
-    # work with 3 *3 fields, wifdth
-    for x in range(len(prettyBoard)):
-        if x == 0 or x == width*3+1:
-            for y in range(len(prettyBoard[0])):
-                prettyBoard[y][x] = y
-
-    for y in range(len(prettyBoard[0])):
-        if y == 0 or y == len(prettyBoard[0])-1:
-            for x in range(len(prettyBoard)):
-                prettyBoard[y][x] = int(x/3)
-
-
-
+    boadWithGrid = []
+    for x in range(width+2):
+        boadWithGrid.append([])
+        for y in range(height+2):
+            if x == 0 or x == width+1 or y == 0 or y == height+1:
+                boadWithGrid[x].append('#')
+            else:
+                boadWithGrid[x].append(board_data[x-1][y-1])
 
     print('\n')
-    print("TURN", turn)
-    print('\n'.join([''.join(['{:1}'.format(item) for item in row])
-                     for row in board_data]))
-    print('\n')
-    print('\n'.join([''.join(['{:3}'.format(item) for item in row])
-                     for row in prettyBoard]))
+    prettyString = ('\n'.join([''.join(['{:1}'.format(item) for item in row])
+                     for row in boadWithGrid]))
+    return prettyString
 
-    print("\033[4mhello\033[0m")
-"""
+def parallel_print_boards(board_list):
+    print_list = []
+    for board_string in board_list:
+        print_list.append([])
+        for line in board_string.split('\n'):
+            print_list[-1].append(line)
 
+    for i in range(len(print_list[0])):
+        print()
+        for solo_list in print_list:
+            print(solo_list[i], end='  ')
+
+def get_differences(original, copy):
+    result = ''
+    for ori, cop in zip(original, copy):
+        if ori is cop:
+            result += ori
+        else:
+            result += 'X'
+    return result
+
+def print_compare(data1, data2):
+    board1 = printBoard(data1)
+    board2 = printBoard(data2)
+    diff = get_differences(board1, board2)
+    parallel_print_boards([board1, diff, board2])
+
+
+
+def check_if_update_was_accurate(prediction, actual_data):
+    prediction_copy = copy.deepcopy(prediction)
+    actual_data_copy = copy.deepcopy(actual_data)
+    del prediction_copy['board']['food']
+    del actual_data_copy['board']['food']
+    assert len(prediction_copy) == len(actual_data_copy), "not same length"
+    for key in prediction_copy:
+        print()
+    compare_elements(prediction_copy, actual_data_copy)
+
+    """
+    print('prediction \n', prediction_copy)
+    print('actual \n', actual_data_copy)
+    a = prediction_copy
+    b = actual_data_copy
+    result = [(k, a[k], b[k]) for k in a if k in b and a[k] != b[k]]
+    pp = pprint.PrettyPrinter(indent=4)
+    pp.pprint(result)
+    """
+    assert prediction_copy == actual_data_copy
 
 
 def nextFieldWithTupel(direction, currentPosition):
@@ -235,6 +156,28 @@ def list_of_reachable_tiles(start, deadly_locations, width, height):
 
     return visited
 
+def get_played_moves(previous_data, current_data):
+    moves = []
+    current_snakes = current_data['board']['snakes']
+    for pre_snake in previous_data['board']['snakes']:
+        lenght = len(moves)
+        for cur_snake in current_snakes:
+            if pre_snake['id'] == cur_snake['id']:
+                for d in directions:
+                    next_tile = next_field(d, cur_snake['body'][1])
+                    if cur_snake['body'][0] == next_tile:
+                        moves.append(d)
+        # snake died
+        if lenght == len(moves):
+            for d in directions:
+                next_tile = next_field(d, pre_snake['body'][0])
+                if pre_snake['body'][1] == next_tile:
+                    moves.append(d)
+
+    return moves
+
+
+
 def update(original_data, moves):
 
     #original_data = json.loads('{"game": {"id": "3553defc-bfab-4dc2-8ccf-fcb8a150b90b"}, "turn": 0, "board": {"height": 15, "width": 15, "food": [{"x": 14, "y": 1}, {"x": 5, "y": 4}, {"x": 9, "y": 4}, {"x": 12, "y": 2}, {"x": 14, "y": 13}, {"x": 9, "y": 8}, {"x": 6, "y": 12}, {"x": 13, "y": 13}, {"x": 0, "y": 0}, {"x": 12, "y": 3}], "snakes": [{"id": "23123a2d-c77d-499e-8d34-c6a25176c1e1", "name": "1", "health": 100, "body": [{"x": 7, "y": 2}, {"x": 7, "y": 2}, {"x": 7, "y": 2}]}]}, "you": {"id": "23123a2d-c77d-499e-8d34-c6a25176c1e1", "name": "1", "health": 100, "body": [{"x": 7, "y": 2}, {"x": 7, "y": 2}, {"x": 7, "y": 2}]}}')
@@ -252,7 +195,7 @@ def update(original_data, moves):
 
     # Move head by adding a new body part at the start of the body array in the move direction
     for move, snake in zip(moves, snakes):
-        destination = nextField(move, snake['body'][0])
+        destination = next_field(move, snake['body'][0])
         snake['body'].insert(0, destination)
 
     # Reduce health
@@ -280,7 +223,9 @@ def update(original_data, moves):
     snakes_that_die = []
     deadly_locations = []
     for snake in snakes:
-        deadly_locations.append(snake['body'][1:]) # everything except head
+        for body_part in snake['body'][1:]:
+            deadly_locations.append(body_part)
+        # everything except head, which is handly seperately, not always deadly
 
     heads = []
     for snake in snakes:
@@ -302,7 +247,7 @@ def update(original_data, moves):
                     if not len(snake['body']) > len(other_snake['body']):
                         snakes_that_die.append(snake)
                         continue
-                    
+
     for dead_snake in snakes_that_die:
         snakes.remove(dead_snake)
     # Check if food needs to be spawned. (see Food Spawn Rules)
@@ -313,5 +258,3 @@ def update(original_data, moves):
             you['body'] = snake['body']
 
     return updated_data
-
-

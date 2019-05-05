@@ -166,6 +166,12 @@ def get_moves_that_directly_lead_to_food(data):
 
 def get_best_move(data):
     directions_without_direct_death = get_moves_without_direct_death(data)
+
+    if not directions_without_direct_death:
+        return ['up']
+    if len(directions_without_direct_death) == 1:
+
+        return directions_without_direct_death[0]
     directions_without_potential_deadly_head_on_head_collision = \
         get_moves_without_potential_deadly_head_on_head_collision(data, directions_without_direct_death)
     directions_with_most_space = get_least_constraining_moves(data, directions_without_direct_death)

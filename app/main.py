@@ -5,10 +5,11 @@ import bottle
 import brain
 import game_engine
 import time
+import sys
 from api import ping_response, start_response, move_response, end_response
 
 
-previous_data_prediction = "f"
+previous_data = "f"
 @bottle.route('/')
 def index():
     return '''
@@ -52,18 +53,22 @@ def start():
 
 @bottle.post('/move')
 def move():
-    global previous_data_prediction
-    startTime = time.time()
+    global previous_data
+
+    start_time = time.time()
     data = bottle.request.json
 
     if data['turn'] > 0:
+        played_moves = game_engine.get_played_moves(previous_data, data)
+        previous_data_prediction = game_engine.update(previous_data, played_moves)
         game_engine.check_if_update_was_accurate(previous_data_prediction, data)
 
-    moveResponse = brain.get_best_move(data)
+    previous_data = data
 
-    previous_data_prediction = game_engine.update(data, [moveResponse])
-    print(time.time() - startTime)
-    return move_response(moveResponse)
+    my_move_response = brain.get_best_move(data)
+
+    print(time.time() - start_time)
+    return move_response(my_move_response)
 
 
 @bottle.post('/end')
@@ -82,9 +87,13 @@ def end():
 application = bottle.default_app()
 
 if __name__ == '__main__':
+    port = 8080
+    if len(sys.argv) == 2:
+        port += int(sys.argv[1])
     bottle.run(
         application,
         host=os.getenv('IP', '0.0.0.0'),
-        port=os.getenv('PORT', '8080'),
+        port=os.getenv('PORT', str(port)),
         debug=os.getenv('DEBUG', True)
     )
+
