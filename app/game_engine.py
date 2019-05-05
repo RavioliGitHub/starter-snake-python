@@ -71,6 +71,10 @@ def printBoard(data):
     print('\n')
     prettyString = ('\n'.join([''.join(['{:1}'.format(item) for item in row])
                      for row in boadWithGrid]))
+
+    for snake, i in zip(data['board']['snakes'], range(len(data['board']['snakes']))):
+        prettyString += str(i) + ' ' + snake['name']
+        prettyString += '\n'
     return prettyString
 
 def parallel_print_boards(board_list):
