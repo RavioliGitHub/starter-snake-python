@@ -58,7 +58,7 @@ def move():
     start_time = time.time()
     data = bottle.request.json
 
-    if data['turn'] > 0:
+    if data['turn'] > 0 and previous_data is not "f":
         played_moves = game_engine.get_played_moves(previous_data, data)
         previous_data_prediction = game_engine.update(previous_data, played_moves)
         game_engine.check_if_update_was_accurate(previous_data_prediction, data)
