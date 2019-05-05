@@ -57,6 +57,7 @@ def move():
 
     start_time = time.time()
     data = bottle.request.json
+    print('turn:', data['turn'])
 
     if data['turn'] > 0 and previous_data is not "f" and len(data['board']['snakes'][0]['body']) > 1:
         played_moves = game_engine.get_played_moves(previous_data, data)

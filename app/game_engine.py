@@ -114,16 +114,16 @@ def check_if_update_was_accurate(prediction, actual_data):
         print()
     compare_elements(prediction_copy, actual_data_copy)
 
-    """
-    print('prediction \n', prediction_copy)
-    print('actual \n', actual_data_copy)
-    a = prediction_copy
-    b = actual_data_copy
-    result = [(k, a[k], b[k]) for k in a if k in b and a[k] != b[k]]
-    pp = pprint.PrettyPrinter(indent=4)
-    pp.pprint(result)
-    """
-    assert prediction_copy == actual_data_copy
+    if not prediction_copy == actual_data_copy:
+        print_compare(prediction, actual_data)
+        print('prediction \n', prediction_copy)
+        print('actual \n', actual_data_copy)
+        a = prediction_copy
+        b = actual_data_copy
+        result = [(k, a[k], b[k]) for k in a if k in b and a[k] != b[k]]
+        pp = pprint.PrettyPrinter(indent=4)
+        pp.pprint(result)
+        assert prediction_copy == actual_data_copy
 
 
 def nextFieldWithTupel(direction, currentPosition):
