@@ -126,7 +126,7 @@ def pretty_print_diff(prediction, actual):
             print('Snake was not deleted ', pre_snake['name'])
     for act_snake in actual['board']['snakes']:
         found = False
-        for pre_snake in pre_snake['board']['snakes']:
+        for pre_snake in prediction['board']['snakes']:
             if pre_snake['id'] == act_snake['id']:
                 found = True
         if not found:
