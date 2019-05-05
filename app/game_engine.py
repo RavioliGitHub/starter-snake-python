@@ -81,9 +81,11 @@ def parallel_print_boards(board_list):
             print_list[-1].append(line)
 
     for i in range(len(print_list[0])):
-        print()
+        s = ''
         for solo_list in print_list:
-            print(solo_list[i], end='  ')
+            s += solo_list[i]
+            s += '   '
+        print(s)
 
 def get_differences(original, copy):
     result = ''
