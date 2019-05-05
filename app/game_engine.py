@@ -102,6 +102,47 @@ def print_compare(data1, data2):
     diff = get_differences(board1, board2)
     parallel_print_boards([board1, diff, board2])
 
+def print_one_line_diff(name, pred, act):
+    print(name, 'doesnt match:', 'Prediction = ', pred, ' || Actual = ', act)
+
+def pretty_print_diff(prediction, actual):
+    if not prediction['game']['id'] == actual['game']['id']:
+        print_one_line_diff('Game ID', prediction['game']['id'], actual['game']['id'])
+    if not prediction['turn'] == actual['turn']:
+        print_one_line_diff('Turn ', prediction['turn'], actual['turn'])
+    if not prediction['board']['height'] == actual['board']['height']:
+        print_one_line_diff('height', prediction['board']['height'], actual['board']['height'])
+    if not prediction['board']['width'] == actual['board']['width']:
+        print_one_line_diff('width', prediction['board']['width'], actual['board']['width'])
+    if not prediction['board']['snakes'] == actual['board']['snakes']:
+        print('ERROR IN SNAKES')
+    for pre_snake in prediction['board']['snakes']:
+        found = False
+        for act_snake in actual['board']['snakes']:
+            if pre_snake['id'] == act_snake['id']:
+                compare_snakes_inline(pre_snake, act_snake)
+                found = True
+        if not found:
+            print('Snake was not deleted ', pre_snake['name'])
+    for act_snake in actual['board']['snakes']:
+        found = False
+        for pre_snake in pre_snake['board']['snakes']:
+            if pre_snake['id'] == act_snake['id']:
+                found = True
+        if not found:
+            print('Snake was deleted by error', act_snake['name'])
+
+
+def compare_snakes_inline(pre_snake, act_snake):
+    # name id health body
+    if not pre_snake['name'] == act_snake['name']:
+        print_one_line_diff('Snake name', pre_snake['name'], act_snake['name'])
+    if not pre_snake['id'] == act_snake['id']:
+        print_one_line_diff('Snake ID', pre_snake['id'], act_snake['id'])
+    if not pre_snake['health'] == act_snake['health']:
+        print_one_line_diff('Snake Health', pre_snake['health'], act_snake['health'])
+    if not pre_snake['body'] == act_snake['body']:
+        print_one_line_diff('Snake body', pre_snake['body'], act_snake['body'])
 
 
 def check_if_update_was_accurate(prediction, actual_data):
@@ -115,6 +156,8 @@ def check_if_update_was_accurate(prediction, actual_data):
     compare_elements(prediction_copy, actual_data_copy)
 
     if not prediction_copy == actual_data_copy:
+        pretty_print_diff(prediction_copy, actual_data_copy)
+        """
         print_compare(prediction, actual_data)
         print('prediction \n', prediction_copy)
         print('actual \n', actual_data_copy)
@@ -123,7 +166,9 @@ def check_if_update_was_accurate(prediction, actual_data):
         result = [(k, a[k], b[k]) for k in a if k in b and a[k] != b[k]]
         pp = pprint.PrettyPrinter(indent=4)
         pp.pprint(result)
+        """
         assert prediction_copy == actual_data_copy
+
 
 
 def nextFieldWithTupel(direction, currentPosition):
