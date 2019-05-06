@@ -168,7 +168,7 @@ def get_best_move(data):
     directions_without_direct_death = get_moves_without_direct_death(data)
 
     if not directions_without_direct_death:
-        return ['up']
+        return 'up'
     if len(directions_without_direct_death) == 1:
 
         return directions_without_direct_death[0]
