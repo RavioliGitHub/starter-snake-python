@@ -55,26 +55,37 @@ def start():
 
 @bottle.post('/move')
 def move():
-    global previous_data
-
-    start_time = time.time()
     data = bottle.request.json
-    print('turn:', data['turn'])
+    my_move_response = get_move_response_string(data)
+    return move_response(my_move_response)
 
-    print(data['turn'] > 0 and previous_data is not "f" and len(data['board']['snakes'][0]['body']) > 1 and previous_data['game']['id'] == data['game']['id'])
-    print(data['turn'] > 0, previous_data is not "f", len(data['board']['snakes'][0]['body']) > 1, previous_data is not "f" and previous_data['game']['id'] == data['game']['id'])
-    if data['turn'] > 0 and previous_data is not "f" and len(data['board']['snakes'][0]['body']) > 1 and previous_data['game']['id'] == data['game']['id']:
+
+def get_move_response_string(data):
+    global previous_data
+    start_time = time.time()
+    #game_engine.save_to_logs(data)
+    #print('turn:', data['turn'])
+
+    #print(data['turn'] > 0 and previous_data is not "f" and len(data['board']['snakes'][0]['body']) > 1 and
+         # previous_data['game']['id'] == data['game']['id'])
+    #print(data['turn'] > 0, previous_data is not "f", len(data['board']['snakes'][0]['body']) > 1,
+          #previous_data is not "f" and previous_data['game']['id'] == data['game']['id'])
+    """
+    if data['turn'] > 0 and previous_data is not "f" and len(data['board']['snakes'][0]['body']) > 1 and \
+            previous_data['game']['id'] == data['game']['id']:
         print('check_prediction')
         played_moves = game_engine.get_played_moves(previous_data, data)
         previous_data_prediction = game_engine.update(previous_data, played_moves)
         game_engine.check_if_update_was_accurate(previous_data_prediction, data)
-
+    """
     previous_data = data
+    #print(brain.evaluate_position(data))
+    #print(brain.max_value(data, 2))
 
     my_move_response = brain.get_best_move(data)
 
-    print(time.time() - start_time)
-    return move_response(my_move_response)
+    #print(time.time() - start_time)
+    return my_move_response
 
 
 @bottle.post('/end')

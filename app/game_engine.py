@@ -1,6 +1,12 @@
 import copy
 import json
 import pprint
+import random
+import main
+from Painter import Window
+import _thread
+import queue
+import time
 """
 After all the snakes have returned their move decision the engine will, for each snake,
 
@@ -306,3 +312,97 @@ def update(original_data, moves):
             you['body'] = snake['body']
 
     return updated_data
+
+def save_to_logs(data):
+    log_read = open("app\\log.txt", "r")
+    content = log_read.read()
+    log_read.close()
+
+    log_write = open("app\\log.txt", "w")
+    message = str(data)
+
+    text = content + '\n' + message
+    log_write.write(text)
+    log_write.close()
+
+
+def create_game(number_of_snakes):
+    HEIGHT = 11
+    WIDTH = 11
+    FOOD_AT_START = 5
+    SNAKE_START_LENGTH = 3
+    START_POSITIONS = [(1,1), (WIDTH-2, HEIGHT-2), (1, HEIGHT-2), (WIDTH-2, 1),
+                       (round(WIDTH/2), 1), (WIDTH-2, round(HEIGHT/2)), (round(WIDTH/2), HEIGHT-2), (1, round(HEIGHT/2))]
+
+    data = {}
+    data['game'] = {}
+    data['game']['id'] = "ID_FILLER"
+    data['turn'] = 0
+    data['board'] = {}
+    data['board']['height'] = HEIGHT
+    data['board']['width'] = WIDTH
+    data['board']['snakes'] = []
+    for i in range(number_of_snakes):
+        snake = {}
+        snake['id'] = str(i)
+        snake['name'] = str(i)
+        snake['health'] = 100
+        snake['body'] = []
+        for j in range(SNAKE_START_LENGTH):
+            snake['body'].append({'x': START_POSITIONS[i][0], 'y': START_POSITIONS[i][1]})
+        data['board']['snakes'].append(snake)
+
+    data['board']['food'] = []
+    empty_tiles = []
+    for x in range(WIDTH):
+        for y in range(HEIGHT):
+            if (x, y) not in START_POSITIONS:
+                empty_tiles.append({'x': x, 'y': y})
+
+    for tile in random.sample(empty_tiles, FOOD_AT_START):
+        data['board']['food'].append(tile)
+    data['you'] = data['board']['snakes'][0]
+    return data
+
+
+def add_food(data):
+    empty_tiles = []
+    for x in range(data['board']['width']):
+        for y in range(data['board']['height']):
+            empty_tiles.append({'x': x, 'y': y})
+    for location in data['board']['food']:
+        empty_tiles.remove(location)
+    for snake in data['board']['snakes']:
+        for location in snake['body']:
+            if location in empty_tiles:
+                empty_tiles.remove(location)
+    data['board']['food'].append(random.choice(empty_tiles))
+
+
+def run_game(number_of_snakes):
+    state_queue = queue.Queue()
+    FOOD_SPAWN_CHANCE = 5
+    data = create_game(number_of_snakes)
+    _thread.start_new_thread(Window, (data, state_queue))
+    if number_of_snakes == 1:
+        end_conditions = 0
+    else:
+        end_conditions = 1
+
+    while len(data['board']['snakes']) != end_conditions:
+        state_queue.put(data)
+        moves = []
+        for snake in data['board']['snakes']:
+            data['you'] = snake
+            moves.append(main.get_move_response_string(data))
+        data = update(data, moves)
+        if random.randint(0, 100) < FOOD_SPAWN_CHANCE:
+            add_food(data)
+
+    state_queue.put("GAME DONE")
+    while not state_queue.empty():
+        time.sleep(0.5)
+
+
+if __name__ == '__main__':
+    run_game(8)
