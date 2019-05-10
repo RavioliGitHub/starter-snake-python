@@ -4,8 +4,8 @@ import pprint
 import random
 import main
 from Painter import Window
-import _thread
-import queue
+import thread
+import Queue
 import time
 """
 After all the snakes have returned their move decision the engine will, for each snake,
@@ -380,10 +380,10 @@ def add_food(data):
 
 
 def run_game(number_of_snakes):
-    state_queue = queue.Queue()
+    state_queue = Queue.Queue()
     FOOD_SPAWN_CHANCE = 20
     data = create_game(number_of_snakes)
-    _thread.start_new_thread(Window, (data, state_queue))
+    thread.start_new_thread(Window, (data, state_queue))
     if number_of_snakes == 1:
         end_conditions = 0
     else:

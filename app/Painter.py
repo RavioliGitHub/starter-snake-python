@@ -1,5 +1,5 @@
 
-from tkinter import Tk, Label, Button, Canvas, Frame
+from Tkinter import Tk, Label, Button, Canvas, Frame
 import time
 block_size = 20
 
@@ -19,7 +19,6 @@ class Window(Tk):
     def draw_next_state(self):
         data = self.state_queue.get()
         if data == "GAME DONE":
-            print("ebgf")
             time.sleep(5)
             for i in range(5):
                 print(i)
