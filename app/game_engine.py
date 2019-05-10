@@ -381,7 +381,7 @@ def add_food(data):
 
 def run_game(number_of_snakes):
     state_queue = queue.Queue()
-    FOOD_SPAWN_CHANCE = 5
+    FOOD_SPAWN_CHANCE = 20
     data = create_game(number_of_snakes)
     _thread.start_new_thread(Window, (data, state_queue))
     if number_of_snakes == 1:
@@ -402,7 +402,3 @@ def run_game(number_of_snakes):
     state_queue.put("GAME DONE")
     while not state_queue.empty():
         time.sleep(0.5)
-
-
-if __name__ == '__main__':
-    run_game(8)
