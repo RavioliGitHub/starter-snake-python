@@ -3,7 +3,6 @@ import os
 import random
 import bottle
 import brain
-import game_engine
 import time
 import sys
 from api import ping_response, start_response, move_response, end_response

@@ -1,12 +1,5 @@
 import copy
-import json
-import pprint
 import random
-import main
-from Painter import Window
-import thread
-import Queue
-import time
 """
 After all the snakes have returned their move decision the engine will, for each snake,
 
@@ -379,26 +372,3 @@ def add_food(data):
     data['board']['food'].append(random.choice(empty_tiles))
 
 
-def run_game(number_of_snakes):
-    state_queue = Queue.Queue()
-    FOOD_SPAWN_CHANCE = 20
-    data = create_game(number_of_snakes)
-    thread.start_new_thread(Window, (data, state_queue))
-    if number_of_snakes == 1:
-        end_conditions = 0
-    else:
-        end_conditions = 1
-
-    while len(data['board']['snakes']) != end_conditions:
-        state_queue.put(data)
-        moves = []
-        for snake in data['board']['snakes']:
-            data['you'] = snake
-            moves.append(main.get_move_response_string(data))
-        data = update(data, moves)
-        if random.randint(0, 100) < FOOD_SPAWN_CHANCE:
-            add_food(data)
-
-    state_queue.put("GAME DONE")
-    while not state_queue.empty():
-        time.sleep(0.5)
