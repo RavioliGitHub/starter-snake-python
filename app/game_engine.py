@@ -306,12 +306,12 @@ def update(original_data, moves):
 
     return updated_data
 
-def save_to_logs(data):
-    log_read = open("app\\log.txt", "r")
+def save_to_logs(data, file):
+    log_read = open("app\\" + file, "r")
     content = log_read.read()
     log_read.close()
 
-    log_write = open("app\\log.txt", "w")
+    log_write = open("app\\" + file, "w")
     message = str(data)
 
     text = content + '\n' + message

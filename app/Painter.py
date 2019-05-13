@@ -10,23 +10,83 @@ class Window(Tk):
         height = data['board']['height']
         width = data['board']['width']
         self.state_queue = state_queue
+        self.state_list = []
+        self.turn = 0
+        self.pause = False
+        self.FPS = 80
         self.canvas = Canvas(master=self, width=width * block_size * 2, height=height * block_size)
         self.canvas.pack()
+        self.end, self.pause_replay, self.fps_button = self.create_buttons()
         self.Frame = Frame(self)
-        self.after(10, self.draw_next_state)
+        self.after(10, self.update_state_list)
+        self.after(1000/self.FPS, self.draw_next_state)
         self.mainloop()
 
-    def draw_next_state(self):
+    def increase_fps(self, args):
+        self.FPS = self.FPS + 10
+        self.fps_button["text"] = self.FPS
+
+    def decrease_fps(self, args):
+        self.FPS = self.FPS - 10
+        if self.FPS < 1:
+            self.FPS = 1
+        self.fps_button["text"] = self.FPS
+
+    def pause_flip(self):
+        self.pause = not self.pause
+        if self.pause:
+            self.pause_replay["text"] = "Play"
+        else:
+            self.pause_replay["text"] = "Pause"
+
+    def reload_game(self):
+        self.turn = 0
+        self.draw_on_canvas(self.state_list[self.turn])
+
+    def forward(self):
+        self.turn = self.turn + 1
+        if self.turn >= len(self.state_list):
+            self.turn = len(self.state_list)-1
+        self.draw_on_canvas(self.state_list[self.turn])
+
+    def backward(self):
+        self.turn = self.turn - 1
+        if self.turn < 0:
+            self.turn = 0
+        self.draw_on_canvas(self.state_list[self.turn])
+
+    def create_buttons(self):
+        end = Button(master=self, command=self.destroy, text="selfdestruction")
+        end.pack()
+        pause = Button(master=self, command=self.pause_flip, text="Pause")
+        pause.pack()
+        fps_button = Button(master=self, text=self.FPS)
+        fps_button.bind('<Button-1>', self.increase_fps)
+        fps_button.bind('<Button-3>', self.decrease_fps)
+        fps_button.pack()
+        reload = Button(master=self, command=self.reload_game, text="Reload")
+        reload.pack()
+        forward = Button(master=self, command=self.forward, text="Forward")
+        forward.pack()
+        backward = Button(master=self, command=self.backward, text="Backward")
+        backward.pack()
+        return end, pause, fps_button
+
+    def update_state_list(self):
         data = self.state_queue.get()
         if data == "GAME DONE":
-            time.sleep(5)
-            for i in range(5):
-                print(i)
-                time.sleep(1)
-            self.destroy()
+            return
         elif data:
-            self.draw_on_canvas(data)
-        self.after(10, self.draw_next_state)
+            self.state_list.append(data)
+        self.after(10, self.update_state_list)
+
+    def draw_next_state(self):
+        if not self.pause:
+            if self.turn >= len(self.state_list):
+                self.turn = len(self.state_list)-1
+            self.draw_on_canvas(self.state_list[self.turn])
+            self.turn = self.turn + 1
+        self.after(1000/self.FPS, self.draw_next_state)
 
     def draw_on_canvas(self, data):
         canvas = self.canvas
@@ -71,6 +131,7 @@ class Window(Tk):
             canvas.create_rectangle((x * block_size + head_offset, y * block_size + head_offset,
                                      (x + 1) * block_size - head_offset, (y + 1) * block_size - head_offset),
                                     fill='purple')
+            assert self.turn == data["turn"], (self.turn, data["turn"])
 
     def draw_other_info(self, data):
         canvas = self.canvas

@@ -6,6 +6,7 @@ import brain
 import main
 import random
 import time
+import json
 
 
 def run_game(number_of_snakes):
@@ -29,5 +30,26 @@ def run_game(number_of_snakes):
             game_engine.add_food(data)
 
     state_queue.put("GAME DONE")
+    state_queue.put("REMOVE THIS FLAG WHEN DONE DRAWING")
     while not state_queue.empty():
         time.sleep(0.5)
+
+
+def replay_logs(file):
+    logs = open(file, "r")
+    states = logs.read()
+    logs.close()
+    state_list = states.split("\n")
+    first_state = json.loads(state_list[0])
+    state_queue = Queue.Queue()
+    thread.start_new_thread(Window, (first_state, state_queue))
+
+    for state in state_list:
+        state_queue.put(json.loads(state))
+
+    state_queue.put("GAME DONE")
+    state_queue.put("REMOVE THIS FLAG WHEN DONE DRAWING")
+    while not state_queue.empty():
+        time.sleep(0.5)
+
+replay_logs("test1.txt")

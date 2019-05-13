@@ -6,6 +6,7 @@ import brain
 import time
 import sys
 from api import ping_response, start_response, move_response, end_response
+import game_engine
 
 
 previous_data = "f"
@@ -58,7 +59,7 @@ def move():
     my_move_response = get_move_response_string(data)
     return move_response(my_move_response)
 
-
+state_list = []
 def get_move_response_string(data):
     global previous_data
     start_time = time.time()
@@ -80,6 +81,8 @@ def get_move_response_string(data):
     previous_data = data
     #print(brain.evaluate_position(data))
     #print(brain.max_value(data, 2))
+    if data['you']['name'] == "1":
+        game_engine.save_to_logs(data, "test1.txt")
 
     my_move_response = brain.get_best_move(data)
 
