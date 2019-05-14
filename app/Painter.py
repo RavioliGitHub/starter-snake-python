@@ -9,15 +9,15 @@ block_size = 20
 class Window(Tk):
     def __init__(self, data, state_queue):
         Tk.__init__(self, className="MySnakeWindow")
-        height = data['board']['height']
-        width = data['board']['width']
+        self.height = data['board']['height']
+        self.width = data['board']['width']
         self.state_queue = state_queue
         self.state_list = []
         self.turn = 0
         self.pause = False
         self.FPS = 80
         self.snake_color_by_id = self.create_snake_color_by_id(data)
-        self.canvas = Canvas(master=self, width=width * block_size * 2, height=height * block_size)
+        self.canvas = Canvas(master=self, width=self.width * block_size * 2, height=self.height * block_size)
         self.canvas.pack()
         self.pause_replay, self.fps_button = self.create_buttons()
         self.Frame = Frame(self)
@@ -26,14 +26,30 @@ class Window(Tk):
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.mainloop()
 
-    def on_closing(self):
+    def calculate_this_state_by_engine(self, *args):
+        if self.turn == 0:
+            print("Not possible for turn 0")
+            return
+        cur_state = self.state_list[self.turn]
+        prev_state = self.state_list[self.turn-1]
+        moves = game_engine.get_played_moves(prev_state, cur_state)
+
+        cur_state_by_engine = game_engine.update(prev_state, moves)
+        self.draw_on_canvas(cur_state_by_engine)
+
+    def show_coordinates(self, *args):
+        for x in range(self.width):
+            for y in range(self.height):
+                self.canvas.create_text((x * block_size, y * block_size + 8), text=(x+1, y+1))
+
+    def on_closing(self, *args):
         empty_state_queue(self.state_queue)
         self.destroy()
 
-    def copy_current_data_to_clipboard(self):
+    def copy_current_data_to_clipboard(self, *args):
         pyperclip.copy(str(self.state_list[self.turn]))
 
-    def save_to_logs(self):
+    def save_to_logs(self, *args):
         game_engine.save_list_to_logs(self.state_list, "PainterTestFile.txt")
 
     def create_snake_color_by_id(self, data):
@@ -45,56 +61,67 @@ class Window(Tk):
 
         return snake_color_by_id
 
-    def increase_fps(self, args):
+    def increase_fps(self, *args):
         self.FPS = self.FPS + 10
         self.fps_button["text"] = self.FPS
 
-    def decrease_fps(self, args):
+    def decrease_fps(self, *args):
         self.FPS = self.FPS - 10
         if self.FPS < 1:
             self.FPS = 1
         self.fps_button["text"] = self.FPS
 
-    def pause_flip(self):
+    def pause_flip(self, *args):
         self.pause = not self.pause
         if self.pause:
             self.pause_replay["text"] = "Play"
         else:
             self.pause_replay["text"] = "Pause"
 
-    def reload_game(self):
+    def reload_game(self, *args):
         self.turn = 0
         self.draw_on_canvas(self.state_list[self.turn])
 
-    def forward(self):
+    def forward(self, *args):
         self.turn = self.turn + 1
         if self.turn >= len(self.state_list):
             self.turn = len(self.state_list)-1
         self.draw_on_canvas(self.state_list[self.turn])
 
-    def backward(self):
+    def backward(self, *args):
         self.turn = self.turn - 1
         if self.turn < 0:
             self.turn = 0
         self.draw_on_canvas(self.state_list[self.turn])
 
     def create_buttons(self):
+        self.bind("<Escape>", self.on_closing)
         pause = Button(master=self, command=self.pause_flip, text="Pause")
         pause.pack()
+        self.bind("<space>", self.pause_flip)
         fps_button = Button(master=self, text=self.FPS)
         fps_button.bind('<Button-1>', self.increase_fps)
+        self.bind("<Up>", self.increase_fps)
         fps_button.bind('<Button-3>', self.decrease_fps)
+        self.bind("<Down>", self.decrease_fps)
         fps_button.pack()
         reload = Button(master=self, command=self.reload_game, text="Reload")
         reload.pack()
         forward = Button(master=self, command=self.forward, text="Forward")
         forward.pack()
+        self.bind("<Right>", self.forward)
         backward = Button(master=self, command=self.backward, text="Backward")
         backward.pack()
+        self.bind("<Left>", self.backward)
         save_button = Button(master=self, command=self.save_to_logs, text="Save to logs")
         save_button.pack()
         copy_data_to_clipboard_button = Button(master=self, command=self.copy_current_data_to_clipboard, text="Clip")
         copy_data_to_clipboard_button.pack()
+        grid_positions = Button(master=self, command=self.show_coordinates, text="Coordinates")
+        grid_positions.pack()
+        engine_calculation = Button(master=self, command=self.calculate_this_state_by_engine, text="Engine")
+        engine_calculation.pack()
+        self.bind("<e>", self.calculate_this_state_by_engine)
         return pause, fps_button
 
     def update_state_list(self):
@@ -185,13 +212,13 @@ class Window(Tk):
 directions = ['up', 'down', 'left', 'right']
 
 def next_field(direction, currentPosition):
-    if direction is 'up':
+    if direction == 'up':
         return {'x': currentPosition['x'], 'y': currentPosition['y'] - 1}
-    elif direction is 'down':
+    elif direction == 'down':
         return {'x': currentPosition['x'], 'y': currentPosition['y'] + 1}
-    elif direction is 'left':
+    elif direction == 'left':
         return {'x': currentPosition['x'] - 1, 'y': currentPosition['y']}
-    elif direction is 'right':
+    elif direction == 'right':
         return {'x': currentPosition['x'] + 1, 'y': currentPosition['y']}
 
 

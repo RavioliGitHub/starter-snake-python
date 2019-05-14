@@ -9,24 +9,24 @@ directions = ['up', 'down', 'left', 'right']
 
 
 def next_field(direction, current_position):
-    if direction is 'up':
+    if direction == 'up':
         return current_position['x'], current_position['y'] - 1
-    elif direction is 'down':
+    elif direction == 'down':
         return current_position['x'], current_position['y'] + 1
-    elif direction is 'left':
+    elif direction == 'left':
         return current_position['x'] - 1, current_position['y']
-    elif direction is 'right':
+    elif direction == 'right':
         return current_position['x'] + 1, current_position['y']
 
 
 def next_field_with_tupel(direction, current_position):
-    if direction is 'up':
+    if direction == 'up':
         return current_position[0], current_position[1] - 1
-    elif direction is 'down':
+    elif direction == 'down':
         return current_position[0], current_position[1] + 1
-    elif direction is 'left':
+    elif direction == 'left':
         return current_position[0] - 1, current_position[1]
-    elif direction is 'right':
+    elif direction == 'right':
         return current_position[0] + 1, current_position[1]
 
 

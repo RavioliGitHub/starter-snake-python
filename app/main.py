@@ -66,12 +66,12 @@ def get_move_response_string(data):
     #game_engine.save_to_logs(data)
     #print('turn:', data['turn'])
 
-    #print(data['turn'] > 0 and previous_data is not "f" and len(data['board']['snakes'][0]['body']) > 1 and
+    #print(data['turn'] > 0 and previous_data != "f" and len(data['board']['snakes'][0]['body']) > 1 and
          # previous_data['game']['id'] == data['game']['id'])
-    #print(data['turn'] > 0, previous_data is not "f", len(data['board']['snakes'][0]['body']) > 1,
-          #previous_data is not "f" and previous_data['game']['id'] == data['game']['id'])
+    #print(data['turn'] > 0, previous_data != "f", len(data['board']['snakes'][0]['body']) > 1,
+          #previous_data != "f" and previous_data['game']['id'] == data['game']['id'])
     """
-    if data['turn'] > 0 and previous_data is not "f" and len(data['board']['snakes'][0]['body']) > 1 and \
+    if data['turn'] > 0 and previous_data != "f" and len(data['board']['snakes'][0]['body']) > 1 and \
             previous_data['game']['id'] == data['game']['id']:
         print('check_prediction')
         played_moves = game_engine.get_played_moves(previous_data, data)

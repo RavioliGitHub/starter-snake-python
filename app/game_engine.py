@@ -14,13 +14,13 @@ After all the snakes have returned their move decision the engine will, for each
 """
 directions = ['up', 'down', 'left', 'right']
 def next_field(direction, currentPosition):
-    if direction is 'up':
+    if direction == 'up':
         return {'x': currentPosition['x'], 'y': currentPosition['y'] - 1}
-    elif direction is 'down':
+    elif direction == 'down':
         return {'x': currentPosition['x'], 'y': currentPosition['y'] + 1}
-    elif direction is 'left':
+    elif direction == 'left':
         return {'x': currentPosition['x'] - 1, 'y': currentPosition['y']}
-    elif direction is 'right':
+    elif direction == 'right':
         return {'x': currentPosition['x'] + 1, 'y': currentPosition['y']}
 
 
@@ -89,7 +89,7 @@ def parallel_print_boards(board_list):
 def get_differences(original, copy):
     result = ''
     for ori, cop in zip(original, copy):
-        if ori is cop:
+        if ori == cop:
             result += ori
         else:
             result += 'X'
@@ -169,13 +169,13 @@ def check_if_update_was_accurate(prediction, actual_data):
 
 
 def nextFieldWithTupel(direction, currentPosition):
-    if direction is 'up':
+    if direction == 'up':
         return currentPosition[0], currentPosition[1] - 1
-    elif direction is 'down':
+    elif direction == 'down':
         return currentPosition[0], currentPosition[1] + 1
-    elif direction is 'left':
+    elif direction == 'left':
         return currentPosition[0] - 1, currentPosition[1]
-    elif direction is 'right':
+    elif direction == 'right':
         return currentPosition[0] + 1, currentPosition[1]
 
 def not_deadly_location_on_board(goal, deadly_locations, width, height):
@@ -290,7 +290,7 @@ def update(original_data, moves):
 
         for other_snake in snakes:
             if other_snake is not snake:
-                if other_snake['body'][0] is snake['body'][0]:
+                if other_snake['body'][0] == snake['body'][0]:
                     if not len(snake['body']) > len(other_snake['body']):
                         snakes_that_die.append(snake)
                         continue
@@ -383,3 +383,4 @@ def add_food(data):
             if location in empty_tiles:
                 empty_tiles.remove(location)
     data['board']['food'].append(random.choice(empty_tiles))
+
