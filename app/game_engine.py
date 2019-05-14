@@ -318,6 +318,19 @@ def save_to_logs(data, file):
     log_write.write(text)
     log_write.close()
 
+def save_list_to_logs(list, file):
+    import os
+    print(os.getcwd())
+    log_write = open(file, "w+")
+    message = ''
+
+    for data in list:
+        message += str(data)
+        message += '\n'
+
+    log_write.write(message)
+    log_write.close()
+
 
 def create_game(number_of_snakes):
     HEIGHT = 11
@@ -370,5 +383,3 @@ def add_food(data):
             if location in empty_tiles:
                 empty_tiles.remove(location)
     data['board']['food'].append(random.choice(empty_tiles))
-
-

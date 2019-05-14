@@ -1,6 +1,8 @@
 
 from Tkinter import Tk, Label, Button, Canvas, Frame
+import game_engine
 import time
+import pyperclip
 block_size = 20
 
 
@@ -14,13 +16,34 @@ class Window(Tk):
         self.turn = 0
         self.pause = False
         self.FPS = 80
+        self.snake_color_by_id = self.create_snake_color_by_id(data)
         self.canvas = Canvas(master=self, width=width * block_size * 2, height=height * block_size)
         self.canvas.pack()
-        self.end, self.pause_replay, self.fps_button = self.create_buttons()
+        self.pause_replay, self.fps_button = self.create_buttons()
         self.Frame = Frame(self)
         self.after(10, self.update_state_list)
         self.after(1000/self.FPS, self.draw_next_state)
+        self.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.mainloop()
+
+    def on_closing(self):
+        empty_state_queue(self.state_queue)
+        self.destroy()
+
+    def copy_current_data_to_clipboard(self):
+        pyperclip.copy(str(self.state_list[self.turn]))
+
+    def save_to_logs(self):
+        game_engine.save_list_to_logs(self.state_list, "PainterTestFile.txt")
+
+    def create_snake_color_by_id(self, data):
+        snake_colors = ['green', 'blue', 'yellow', 'gray', 'brown', 'purple', 'black', 'orange']
+        snake_color_by_id = {}
+
+        for snake, color in zip(data['board']['snakes'], snake_colors):
+            snake_color_by_id[snake['id']] = color
+
+        return snake_color_by_id
 
     def increase_fps(self, args):
         self.FPS = self.FPS + 10
@@ -56,8 +79,6 @@ class Window(Tk):
         self.draw_on_canvas(self.state_list[self.turn])
 
     def create_buttons(self):
-        end = Button(master=self, command=self.destroy, text="selfdestruction")
-        end.pack()
         pause = Button(master=self, command=self.pause_flip, text="Pause")
         pause.pack()
         fps_button = Button(master=self, text=self.FPS)
@@ -70,7 +91,11 @@ class Window(Tk):
         forward.pack()
         backward = Button(master=self, command=self.backward, text="Backward")
         backward.pack()
-        return end, pause, fps_button
+        save_button = Button(master=self, command=self.save_to_logs, text="Save to logs")
+        save_button.pack()
+        copy_data_to_clipboard_button = Button(master=self, command=self.copy_current_data_to_clipboard, text="Clip")
+        copy_data_to_clipboard_button.pack()
+        return pause, fps_button
 
     def update_state_list(self):
         data = self.state_queue.get()
@@ -97,9 +122,6 @@ class Window(Tk):
         width = board['width']
         snakes = board['snakes']
         food_locations = board['food']
-        you = data['you']
-        you_head = you['body'][0]
-        snake_colors = ['green', 'blue', 'yellow', 'gray', 'brown', 'purple', 'black', 'orange']
 
         for x in range(width):
             for y in range(height):
@@ -112,7 +134,8 @@ class Window(Tk):
             canvas.create_rectangle((x * block_size, y * block_size, (x + 1) * block_size, (y + 1) * block_size),
                                     fill='red', outline='black')
 
-        for snake, color in zip(snakes, snake_colors):
+        for snake in snakes:
+            color = self.snake_color_by_id[snake['id']]
             for body_part, i in zip(snake['body'], range(len(snake['body']))):
                 x = body_part['x']
                 y = body_part['y']
@@ -144,11 +167,17 @@ class Window(Tk):
         you_head = you['body'][0]
         snake_colors = ['green', 'blue', 'yellow', 'gray', 'brown', 'purple', 'black', 'orange']
 
+        canvas.create_text((width * block_size + 100, 10), text='Turn: ' + str(data['turn']))
+
         for snake, i in zip(snakes, range(1, len(snakes)+1)):
-            canvas.create_text((width * block_size + 10, round(height/len(snakes)*block_size*i-block_size/2))
+            color = self.snake_color_by_id[snake['id']]
+            canvas.create_text((width * block_size + 10, round(height/len(snakes)*block_size*i-block_size/2) + 20)
                                , text=snake['name'])
-            canvas.create_text((width * block_size + 100, round(height / len(snakes) * block_size * i - block_size / 2))
+            canvas.create_text((width * block_size + 200, round(height / len(snakes) * block_size * i - block_size / 2) + 20)
                                , text=snake['health'])
+            canvas.create_rectangle((width * block_size + 20, round(height / len(snakes) * block_size * i - block_size / 2) + 10,
+                                     width * block_size + 20 + snake['health'], round(height / len(snakes) * block_size * i - block_size / 2) + 10 + 20),
+                                    fill=color)
 
 
 
@@ -183,4 +212,9 @@ def offset(direction):
     if direction == 'right':
         return size, 0, 0, 0
     return 0, 0, 0, 0  # applies at the beginning, when several body parts are on one spot
+
+
+def empty_state_queue(state_queue):
+    while state_queue.get():
+        pass
 

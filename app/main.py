@@ -82,7 +82,8 @@ def get_move_response_string(data):
     #print(brain.evaluate_position(data))
     #print(brain.max_value(data, 2))
     if data['you']['name'] == "1":
-        game_engine.save_to_logs(data, "test1.txt")
+        #game_engine.save_to_logs(data, "test1.txt")
+        pass
 
     my_move_response = brain.get_best_move(data)
 

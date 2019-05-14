@@ -40,16 +40,18 @@ def replay_logs(file):
     states = logs.read()
     logs.close()
     state_list = states.split("\n")
-    first_state = json.loads(state_list[0])
+    first_state = json.loads(state_list[0].replace("'", '"'))
     state_queue = Queue.Queue()
     thread.start_new_thread(Window, (first_state, state_queue))
 
     for state in state_list:
-        state_queue.put(json.loads(state))
+        if state:
+            state_queue.put(json.loads(state.replace("'", '"')))
 
     state_queue.put("GAME DONE")
     state_queue.put("REMOVE THIS FLAG WHEN DONE DRAWING")
     while not state_queue.empty():
+        
         time.sleep(0.5)
 
-replay_logs("test1.txt")
+replay_logs("PainterTestFile.txt")
