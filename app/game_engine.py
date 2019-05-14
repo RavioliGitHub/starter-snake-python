@@ -306,6 +306,7 @@ def update(original_data, moves):
 
     return updated_data
 
+
 def save_to_logs(data, file):
     log_read = open("app\\" + file, "r")
     content = log_read.read()
@@ -335,7 +336,7 @@ def save_list_to_logs(list, file):
 def create_game(number_of_snakes):
     HEIGHT = 11
     WIDTH = 11
-    FOOD_AT_START = 5
+    FOOD_AT_START = 0
     SNAKE_START_LENGTH = 3
     START_POSITIONS = [(1,1), (WIDTH-2, HEIGHT-2), (1, HEIGHT-2), (WIDTH-2, 1),
                        (round(WIDTH/2), 1), (WIDTH-2, round(HEIGHT/2)), (round(WIDTH/2), HEIGHT-2), (1, round(HEIGHT/2))]
@@ -382,5 +383,6 @@ def add_food(data):
         for location in snake['body']:
             if location in empty_tiles:
                 empty_tiles.remove(location)
-    data['board']['food'].append(random.choice(empty_tiles))
+    if empty_tiles:
+        data['board']['food'].append(random.choice(empty_tiles))
 

@@ -2,6 +2,7 @@
 from Tkinter import Tk, Label, Button, Canvas, Frame
 import game_engine
 import time
+import brain
 import pyperclip
 block_size = 20
 
@@ -15,7 +16,7 @@ class Window(Tk):
         self.state_list = []
         self.turn = 0
         self.pause = False
-        self.FPS = 80
+        self.FPS = 100
         self.snake_color_by_id = self.create_snake_color_by_id(data)
         self.canvas = Canvas(master=self, width=self.width * block_size * 2, height=self.height * block_size)
         self.canvas.pack()
@@ -25,6 +26,14 @@ class Window(Tk):
         self.after(1000/self.FPS, self.draw_next_state)
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.mainloop()
+
+    def calculate_min_max_value(self, *args):
+        depth = 2
+        data = self.state_list[self.turn]
+        snakes = data['board']['snakes']
+        for snake in snakes:
+            data['you'] = snake
+            print(snake['name'], brain.max_value(data, depth), brain.get_best_move_min_max(data, depth))
 
     def calculate_this_state_by_engine(self, *args):
         if self.turn == 0:
@@ -122,6 +131,9 @@ class Window(Tk):
         engine_calculation = Button(master=self, command=self.calculate_this_state_by_engine, text="Engine")
         engine_calculation.pack()
         self.bind("<e>", self.calculate_this_state_by_engine)
+        min_max_calculation = Button(master=self, command=self.calculate_min_max_value, text="MinMax")
+        min_max_calculation.pack()
+        self.bind("<c>", self.calculate_min_max_value)
         return pause, fps_button
 
     def update_state_list(self):
@@ -133,11 +145,13 @@ class Window(Tk):
         self.after(10, self.update_state_list)
 
     def draw_next_state(self):
-        if not self.pause:
+        if not self.pause and self.state_list:
             if self.turn >= len(self.state_list):
                 self.turn = len(self.state_list)-1
             self.draw_on_canvas(self.state_list[self.turn])
             self.turn = self.turn + 1
+            if self.turn >= len(self.state_list):
+                self.turn = len(self.state_list) - 1
         self.after(1000/self.FPS, self.draw_next_state)
 
     def draw_on_canvas(self, data):

@@ -167,6 +167,7 @@ def get_moves_that_directly_lead_to_food(data):
 
 
 def get_best_move(data):
+    return get_best_move_min_max(data, 2)
     directions_without_direct_death = get_moves_without_direct_death(data)
 
     if not directions_without_direct_death:
@@ -193,12 +194,32 @@ def get_best_move(data):
         move_score_list.append((d, score))
 
     move_score_list.sort(key=itemgetter(1), reverse=True)
-    # use randomness to avoid being stuff in a loop
+    # use randomness to avoid being stuck in a loop
     equivalent_best_moves = []
     for move in move_score_list:
         if move[1] == move_score_list[0][1]:
             equivalent_best_moves.append(move[0])
     return random.choice(equivalent_best_moves)
+
+
+def get_best_move_min_max(data, depth):
+    if not get_moves_without_direct_death(data):
+        return 'up'
+
+    move_score_list = []
+    for move in get_moves_without_direct_death(data):
+        move_score_list.append((move, min_value(data, depth, move)))
+
+    move_score_list.sort(key=itemgetter(1), reverse=True)
+    # use randomness to avoid being stuck in a loop
+    print(move_score_list)
+    equivalent_best_moves = []
+    for move in move_score_list:
+        if move[1] == move_score_list[0][1]:
+            equivalent_best_moves.append(move[0])
+    print(equivalent_best_moves)
+    return random.choice(equivalent_best_moves)
+
 
 def evaluate_position(data):
     directions_without_direct_death = get_moves_without_direct_death(data)
@@ -262,23 +283,29 @@ def min_value(position, depth, my_move):
         updated_position = game_engine.update(position, move_combination)
         child_scores.append(max_value(updated_position, depth-1))
     
-    print('min', depth, child_scores)
+    # print('min', depth, child_scores)
     return min(child_scores)
 
 
 def max_value(position, depth):
-    if depth == 0:
-        return evaluate_position(position)
     if not position['board']['snakes']:
         return 10
+    #print(im_dead(position))
+    # print(position)
+    # print(get_moves_without_direct_death(position))
+    #print(not get_moves_without_direct_death(position))
     if im_dead(position) or not get_moves_without_direct_death(position):
         return 0
     if len(position['board']['snakes']) == 1:
         return 1000000
+    if depth == 0:
+        return evaluate_position(position)
     else:
         child_scores = []
         for move in get_moves_without_direct_death(position):
             child_scores.append(min_value(position, depth, move))
 
-    print('max', depth, get_moves_without_direct_death(position), child_scores)
-    return max(child_scores)
+        # print(position['turn'], position['you']['name'], depth, max(child_scores), child_scores, get_moves_without_direct_death(position))
+
+        # print('max', depth, get_moves_without_direct_death(position), child_scores)
+        return max(child_scores)

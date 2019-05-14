@@ -9,33 +9,6 @@ import time
 import json
 
 
-def run_game(number_of_snakes):
-    state_queue = Queue.Queue()
-    FOOD_SPAWN_CHANCE = 20
-    data = game_engine.create_game(number_of_snakes)
-    thread.start_new_thread(Window, (data, state_queue))
-    if number_of_snakes == 1:
-        end_conditions = 0
-    else:
-        end_conditions = 1
-
-    while len(data['board']['snakes']) != end_conditions:
-        state_queue.put(data)
-        moves = []
-        for snake in data['board']['snakes']:
-            data['you'] = snake
-            moves.append(main.get_move_response_string(data))
-        data = game_engine.update(data, moves)
-        if random.randint(0, 100) < FOOD_SPAWN_CHANCE:
-            game_engine.add_food(data)
-    state_queue.put(data)
-
-    state_queue.put("GAME DONE")
-    state_queue.put("REMOVE THIS FLAG WHEN DONE DRAWING")
-    while not state_queue.empty():
-        time.sleep(0.5)
-
-
 def replay_logs(file):
     logs = open(file, "r")
     states = logs.read()
@@ -116,5 +89,35 @@ def run_game_without_window(number_of_snakes):
     print("Done")
 
 
-run_game(1)
+def run_game(number_of_snakes):
+    state_queue = Queue.Queue()
+    FOOD_SPAWN_CHANCE = 20
+    data = game_engine.create_game(number_of_snakes)
+    thread.start_new_thread(Window, (data, state_queue))
+    if number_of_snakes == 1:
+        end_conditions = 0
+    else:
+        end_conditions = 1
+
+    while len(data['board']['snakes']) != end_conditions:
+        print(data['turn'])
+        state_queue.put(data)
+        moves = []
+        for snake in data['board']['snakes']:
+            data['you'] = snake
+            moves.append(main.get_move_response_string(data))
+        data = game_engine.update(data, moves)
+        if random.randint(0, 100) < FOOD_SPAWN_CHANCE:
+            game_engine.add_food(data)
+    state_queue.put(data)
+
+    state_queue.put("GAME DONE")
+    state_queue.put("REMOVE THIS FLAG WHEN DONE DRAWING")
+    while not state_queue.empty():
+        time.sleep(0.5)
+
+
+
+# run_game(2)
+replay_logs("PainterTestFile.txt")
 # replay_logs_using_engine("PainterTestFile.txt")
