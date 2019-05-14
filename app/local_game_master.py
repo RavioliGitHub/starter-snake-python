@@ -28,6 +28,7 @@ def run_game(number_of_snakes):
         data = game_engine.update(data, moves)
         if random.randint(0, 100) < FOOD_SPAWN_CHANCE:
             game_engine.add_food(data)
+    state_queue.put(data)
 
     state_queue.put("GAME DONE")
     state_queue.put("REMOVE THIS FLAG WHEN DONE DRAWING")
@@ -94,6 +95,26 @@ def replay_logs_using_engine(file):
         print("waiting")
         time.sleep(0.2)
 
-# 42, 71, 78, 135
-replay_logs("PainterTestFile.txt")
+
+def run_game_without_window(number_of_snakes):
+    print("start" , number_of_snakes)
+    FOOD_SPAWN_CHANCE = 20
+    data = game_engine.create_game(number_of_snakes)
+    if number_of_snakes == 1:
+        end_conditions = 0
+    else:
+        end_conditions = 1
+
+    while len(data['board']['snakes']) != end_conditions:
+        moves = []
+        for snake in data['board']['snakes']:
+            data['you'] = snake
+            moves.append(main.get_move_response_string(data))
+        data = game_engine.update(data, moves)
+        if random.randint(0, 100) < FOOD_SPAWN_CHANCE:
+            game_engine.add_food(data)
+    print("Done")
+
+
+run_game(1)
 # replay_logs_using_engine("PainterTestFile.txt")

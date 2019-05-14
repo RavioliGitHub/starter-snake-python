@@ -207,7 +207,7 @@ def get_played_moves(previous_data, current_data):
     moves = []
     current_snakes = current_data['board']['snakes']
     for pre_snake in previous_data['board']['snakes']:
-        lenght = len(moves)
+        length = len(moves)
         for cur_snake in current_snakes:
             if pre_snake['id'] == cur_snake['id']:
                 for d in directions:
@@ -215,7 +215,7 @@ def get_played_moves(previous_data, current_data):
                     if cur_snake['body'][0] == next_tile:
                         moves.append(d)
         # snake died
-        if lenght == len(moves):
+        if length == len(moves):
             for d in directions:
                 next_tile = next_field(d, pre_snake['body'][0])
                 if pre_snake['body'][1] == next_tile:
