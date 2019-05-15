@@ -167,7 +167,7 @@ def get_moves_that_directly_lead_to_food(data):
 
 
 def get_best_move(data):
-    return get_best_move_min_max(data, 2)
+    #return get_best_move_min_max(data, 2)
     directions_without_direct_death = get_moves_without_direct_death(data)
 
     if not directions_without_direct_death:
