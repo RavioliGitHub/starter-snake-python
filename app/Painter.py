@@ -1,9 +1,8 @@
-
 from Tkinter import Tk, Label, Button, Canvas, Frame
 import game_engine
 import time
 import brain
-import pyperclip
+#import pyperclip
 block_size = 20
 
 
@@ -56,7 +55,8 @@ class Window(Tk):
         self.destroy()
 
     def copy_current_data_to_clipboard(self, *args):
-        pyperclip.copy(str(self.state_list[self.turn]))
+        #pyperclip.copy(str(self.state_list[self.turn]))
+        pass
 
     def save_to_logs(self, *args):
         game_engine.save_list_to_logs(self.state_list, "PainterTestFile.txt")
