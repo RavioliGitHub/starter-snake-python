@@ -149,6 +149,7 @@ class Window(Tk):
             if self.turn >= len(self.state_list):
                 self.turn = len(self.state_list)-1
             self.draw_on_canvas(self.state_list[self.turn])
+            self.update()
             self.turn = self.turn + 1
             if self.turn >= len(self.state_list):
                 self.turn = len(self.state_list) - 1

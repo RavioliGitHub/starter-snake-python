@@ -5,6 +5,21 @@ from operator import itemgetter
 import itertools
 import game_engine
 
+
+"""
+BEHAVIOR I WANT TO ENFORCE
+
+1.) Dont do moves that kill me immediately
+
+2.) Avoid potential deadly head on head collisions
+
+3.) Avoid going in tight spaces
+
+4.) Avoid starvation
+
+5.) Kill if possible
+
+"""
 directions = ['up', 'down', 'left', 'right']
 
 
@@ -166,8 +181,7 @@ def get_moves_that_directly_lead_to_food(data):
     return moves_that_directly_lead_to_food
 
 
-def get_best_move(data):
-    #return get_best_move_min_max(data, 2)
+def get_best_move_based_on_current_data(data):
     directions_without_direct_death = get_moves_without_direct_death(data)
 
     if not directions_without_direct_death:
@@ -260,12 +274,23 @@ def number_of_free_tiles(data):
 
 
 def evaluate_position(data):
+    if not data['board']['snakes']:
+        return 0.5
+    #print(im_dead(position))
+    # print(position)
+    # print(get_moves_without_direct_death(position))
+    #print(not get_moves_without_direct_death(position))
     my_head = (data['you']['body'][0]['x'], data['you']['body'][0]['y'])
     width = data['board']['width']
     height = data['board']['height']
     #print(float(len(list_of_reachable_tiles(my_head, get_deadly_locations(data), width, height)))/number_of_free_tiles(data))
     #print(len(list_of_reachable_tiles(my_head, get_deadly_locations(data), width, height)), number_of_free_tiles(data))
-    return float(len(list_of_reachable_tiles(my_head, get_deadly_locations(data), width, height)))/number_of_free_tiles(data)
+    if len(list_of_reachable_tiles(my_head, get_deadly_locations(data), width, height)) < len(data['you']['body']):
+        return float(len(list_of_reachable_tiles(my_head, get_deadly_locations(data), width, height)))/(width*height)
+    elif not get_moves_without_potential_deadly_head_on_head_collision(data, get_moves_without_direct_death(data)):
+        return 0.5
+    else:
+        return 1
 
 
 def im_dead(data):
@@ -311,23 +336,17 @@ def min_value(position, depth, my_move):
     return min(child_scores)
 
 
-def max_value(position, depth):
-    if not position['board']['snakes']:
-        return 10
-    #print(im_dead(position))
-    # print(position)
-    # print(get_moves_without_direct_death(position))
-    #print(not get_moves_without_direct_death(position))
-    if im_dead(position) or not get_moves_without_direct_death(position):
+def max_value(data, depth):
+    if im_dead(data) or not get_moves_without_direct_death(data):
         return 0
-    if len(position['board']['snakes']) == 1:
+    if len(data['board']['snakes']) == 1:
         return 1000000
     if depth == 0:
-        return evaluate_position(position)
+        return evaluate_position(data)
     else:
         child_scores = []
-        for move in get_moves_without_direct_death(position):
-            child_scores.append(min_value(position, depth, move))
+        for move in get_moves_without_direct_death(data):
+            child_scores.append(min_value(data, depth, move))
 
         # print(position['turn'], position['you']['name'], depth, max(child_scores), child_scores, get_moves_without_direct_death(position))
 

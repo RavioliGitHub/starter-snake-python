@@ -85,7 +85,7 @@ def get_move_response_string(data):
         #game_engine.save_to_logs(data, "test1.txt")
         pass
 
-    my_move_response = brain.get_best_move(data)
+    my_move_response = brain.get_best_move_based_on_current_data(data)
 
     #print(time.time() - start_time)
     return my_move_response
