@@ -212,15 +212,17 @@ def get_best_move_min_max(data, depth):
 
     move_score_list.sort(key=itemgetter(1), reverse=True)
     # use randomness to avoid being stuck in a loop
-    print(move_score_list)
+    # print(move_score_list)
     equivalent_best_moves = []
     for move in move_score_list:
         if move[1] == move_score_list[0][1]:
             equivalent_best_moves.append(move[0])
-    print(equivalent_best_moves)
+    # print(equivalent_best_moves)
     return random.choice(equivalent_best_moves)
 
 
+
+"""
 def evaluate_position(data):
     directions_without_direct_death = get_moves_without_direct_death(data)
     if not directions_without_direct_death:
@@ -242,6 +244,28 @@ def evaluate_position(data):
             score += 1
 
     return score
+"""
+
+
+def number_of_free_tiles(data):
+    empty_tiles = []
+    for x in range(data['board']['width']):
+        for y in range(data['board']['height']):
+            empty_tiles.append({'x': x, 'y': y})
+    for snake in data['board']['snakes']:
+        for location in snake['body']:
+            if location in empty_tiles:
+                empty_tiles.remove(location)
+    return len(empty_tiles)
+
+
+def evaluate_position(data):
+    my_head = (data['you']['body'][0]['x'], data['you']['body'][0]['y'])
+    width = data['board']['width']
+    height = data['board']['height']
+    #print(float(len(list_of_reachable_tiles(my_head, get_deadly_locations(data), width, height)))/number_of_free_tiles(data))
+    #print(len(list_of_reachable_tiles(my_head, get_deadly_locations(data), width, height)), number_of_free_tiles(data))
+    return float(len(list_of_reachable_tiles(my_head, get_deadly_locations(data), width, height)))/number_of_free_tiles(data)
 
 
 def im_dead(data):

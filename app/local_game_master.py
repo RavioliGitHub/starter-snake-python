@@ -78,7 +78,7 @@ def run_game_without_window(number_of_snakes):
     else:
         end_conditions = 1
 
-    while len(data['board']['snakes']) != end_conditions:
+    while len(data['board']['snakes']) > end_conditions:
         moves = []
         for snake in data['board']['snakes']:
             data['you'] = snake
@@ -99,7 +99,7 @@ def run_game(number_of_snakes):
     else:
         end_conditions = 1
 
-    while len(data['board']['snakes']) != end_conditions:
+    while len(data['board']['snakes']) > end_conditions:
         print(data['turn'])
         state_queue.put(data)
         moves = []
@@ -118,6 +118,6 @@ def run_game(number_of_snakes):
 
 
 
-# run_game(2)
-replay_logs("PainterTestFile.txt")
+run_game(2)
+# replay_logs("PainterTestFile.txt")
 # replay_logs_using_engine("PainterTestFile.txt")

@@ -16,7 +16,7 @@ class Window(Tk):
         self.state_list = []
         self.turn = 0
         self.pause = False
-        self.FPS = 100
+        self.FPS = 60
         self.snake_color_by_id = self.create_snake_color_by_id(data)
         self.canvas = Canvas(master=self, width=self.width * block_size * 2, height=self.height * block_size)
         self.canvas.pack()
