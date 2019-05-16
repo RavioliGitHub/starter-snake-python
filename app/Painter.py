@@ -3,6 +3,7 @@ import game_engine
 import time
 import brain
 #import pyperclip
+import main
 block_size = 20
 
 
@@ -17,7 +18,7 @@ class Window(Tk):
         self.pause = False
         self.FPS = 60
         self.snake_color_by_id = self.create_snake_color_by_id(data)
-        self.canvas = Canvas(master=self, width=self.width * block_size * 2, height=self.height * block_size)
+        self.canvas = Canvas(master=self, width=self.width * block_size * 2 + 500, height=self.height * block_size)
         self.canvas.pack()
         self.pause_replay, self.fps_button = self.create_buttons()
         self.Frame = Frame(self)
@@ -26,13 +27,12 @@ class Window(Tk):
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.mainloop()
 
-    def calculate_min_max_value(self, *args):
-        depth = 2
+    def calculate_moves(self, *args):
         data = self.state_list[self.turn]
         snakes = data['board']['snakes']
         for snake in snakes:
             data['you'] = snake
-            print(snake['name'], brain.max_value(data, depth), brain.get_best_move_min_max(data, depth))
+            print(snake['name'], main.get_move_response_string(data))
 
     def calculate_this_state_by_engine(self, *args):
         if self.turn == 0:
@@ -131,9 +131,9 @@ class Window(Tk):
         engine_calculation = Button(master=self, command=self.calculate_this_state_by_engine, text="Engine")
         engine_calculation.pack()
         self.bind("<e>", self.calculate_this_state_by_engine)
-        min_max_calculation = Button(master=self, command=self.calculate_min_max_value, text="MinMax")
-        min_max_calculation.pack()
-        self.bind("<c>", self.calculate_min_max_value)
+        move_calculation = Button(master=self, command=self.calculate_moves, text="Calculate moves")
+        move_calculation.pack()
+        self.bind("<c>", self.calculate_moves)
         return pause, fps_button
 
     def update_state_list(self):
@@ -217,6 +217,9 @@ class Window(Tk):
                                , text=snake['name'])
             canvas.create_text((width * block_size + 200, round(height / len(snakes) * block_size * i - block_size / 2) + 20)
                                , text=snake['health'])
+            canvas.create_text(
+                (width * block_size + 300, round(height / len(snakes) * block_size * i - block_size / 2) + 20)
+                , text=round(brain.get_distance_to_center(data, snake['body'][0]), 2))
             canvas.create_rectangle((width * block_size + 20, round(height / len(snakes) * block_size * i - block_size / 2) + 10,
                                      width * block_size + 20 + snake['health'], round(height / len(snakes) * block_size * i - block_size / 2) + 10 + 20),
                                     fill=color)

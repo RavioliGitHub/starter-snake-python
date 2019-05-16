@@ -296,7 +296,8 @@ def update(original_data, moves):
                         continue
 
     for dead_snake in snakes_that_die:
-        snakes.remove(dead_snake)
+        if dead_snake in snakes:
+            snakes.remove(dead_snake)
     # Check if food needs to be spawned. (see Food Spawn Rules)
 
     for snake in snakes:

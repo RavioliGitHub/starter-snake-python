@@ -107,7 +107,7 @@ def run_game(number_of_snakes):
             data['you'] = snake
             start = time.time()
             moves.append(main.get_move_response_string(data))
-            print(round(time.time()-start, 2))
+            #print(round(time.time()-start, 2))
         data = game_engine.update(data, moves)
         if random.randint(0, 100) < FOOD_SPAWN_CHANCE:
             game_engine.add_food(data)
@@ -120,6 +120,6 @@ def run_game(number_of_snakes):
 
 
 
-run_game(6)
+run_game(8)
 # replay_logs("PainterTestFile.txt")
 # replay_logs_using_engine("PainterTestFile.txt")
