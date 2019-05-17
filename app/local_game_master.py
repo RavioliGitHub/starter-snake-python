@@ -120,6 +120,8 @@ def run_game(number_of_snakes):
 
 
 
-# run_game(8)
+for i in range(100):
+    print(i)
+    #run_game_without_window(i % 8 + 1)
 # replay_logs("PainterTestFile.txt")
 # replay_logs_using_engine("PainterTestFile.txt")

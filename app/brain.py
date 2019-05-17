@@ -146,13 +146,17 @@ def get_moves_without_potential_deadly_head_on_head_collision(data, directions_w
 
 
 def get_least_constraining_moves(data, directions_without_direct_death):
-    #TODO is bugged for the 1st move, because they are 4 possibilities, not 5
     board = data['board']
     height = board['height']
     width = board['width']
     you = data['you']
     you_head = you['body'][0]
     directions_with_most_space = []
+
+    if data['turn'] == 0:
+        for d in directions:
+            directions_with_most_space.append(d)
+        return directions_with_most_space
 
     number_of_reachable_tiles = []
     deadly_locations = get_deadly_locations(data)
@@ -308,6 +312,14 @@ def get_best_move_min_max(data, depth):
             equivalent_best_moves.append(move[0])
     # print(equivalent_best_moves)
     return random.choice(equivalent_best_moves)
+
+
+def create_map_with_duration(data):
+    pass
+
+
+def probably_too_tight():
+    pass
 
 
 
