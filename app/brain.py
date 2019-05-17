@@ -92,7 +92,13 @@ def get_deadly_locations(data):
     return deadly_locations
 
 
-def get_moves_without_direct_death(data):
+def get_moves_without_direct_death(data, *snake):
+    you_before = data['you']
+
+    if snake:
+        snake = snake[0]
+        data['you'] = snake
+
     board = data['board']
     height = board['height']
     width = board['width']
@@ -117,6 +123,7 @@ def get_moves_without_direct_death(data):
         if deadly_locations.__contains__(next_tile):
             directions_without_direct_death.remove(d)
 
+    data['you'] = you_before
     return directions_without_direct_death
 
 
@@ -286,7 +293,7 @@ def directions_that_lead_to_potential_50_50_head_on_head_collision(data):
             round(get_distance_between_two_points(you_head, snake['body'][0]), 2) == 2.83:
             for my_d in directions:
                 if my_d not in directions_that_lead_to_potential_collision:
-                    for his_d in directions:
+                    for his_d in get_moves_without_direct_death(data, snake):
                         my_next_tile = next_field_dic(my_d, you_head)
                         his_next_tile = next_field_dic(his_d, snake['body'][0])
                         new_distance = get_distance_between_two_points(my_next_tile, his_next_tile)

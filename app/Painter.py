@@ -212,16 +212,17 @@ class Window(Tk):
         canvas.create_text((width * block_size + 100, 10), text='Turn: ' + str(data['turn']))
 
         for snake, i in zip(snakes, range(1, len(snakes)+1)):
+            info_height = int(snake['id'])*block_size + 30
             color = self.snake_color_by_id[snake['id']]
-            canvas.create_text((width * block_size + 10, round(height/len(snakes)*block_size*i-block_size/2) + 20)
+            canvas.create_text((width * block_size + 10, info_height)
                                , text=snake['name'])
-            canvas.create_text((width * block_size + 200, round(height / len(snakes) * block_size * i - block_size / 2) + 20)
+            canvas.create_text((width * block_size + 200, info_height)
                                , text=snake['health'])
             canvas.create_text(
-                (width * block_size + 300, round(height / len(snakes) * block_size * i - block_size / 2) + 20)
+                (width * block_size + 300, info_height)
                 , text=round(brain.get_distance_to_center(data, snake['body'][0]), 2))
-            canvas.create_rectangle((width * block_size + 20, round(height / len(snakes) * block_size * i - block_size / 2) + 10,
-                                     width * block_size + 20 + snake['health'], round(height / len(snakes) * block_size * i - block_size / 2) + 10 + 20),
+            canvas.create_rectangle((width * block_size + 20, info_height - 10,
+                                     width * block_size + 20 + snake['health'], info_height - 10 + 20),
                                     fill=color)
 
 
