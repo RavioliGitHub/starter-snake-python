@@ -4,6 +4,7 @@ import time
 from operator import itemgetter
 import itertools
 import game_engine
+import copy
 
 
 """
@@ -217,8 +218,7 @@ def get_best_move_based_on_current_data(data):
     directions_with_most_space = get_least_constraining_moves(data, directions_without_direct_death)
     directions_with_food = get_moves_that_directly_lead_to_food(data)
     directions_that_lead_to_center = get_directions_that_lead_towards_the_center(data)
-    directions_that_might_lead_to_head_on_head_lockdown = \
-        directions_that_lead_to_potential_50_50_head_on_head_collision(data)
+    directions_that_lead_to_head_lockdown_min_max = min_max_search_for_moves_without_unavoidable_head_collision(data)
 
     move_score_list = []
     points = [0, 0, 0, 0]
@@ -229,21 +229,15 @@ def get_best_move_based_on_current_data(data):
             score += 10000
         if directions_without_potential_deadly_head_on_head_collision.__contains__(d):
             score += 1000
-        if not directions_that_might_lead_to_head_on_head_lockdown.__contains__(d):
+        if not directions_that_lead_to_head_lockdown_min_max.__contains__(d):
             score += 100
         if directions_that_lead_to_center.__contains__(d):
             score += 10
         if directions_with_food.__contains__(d):
             score += 1
         move_score_list.append((d, score))
-    #print()
-    #print(directions_with_most_space)
-    #print directions_that_lead_to_center
+
     move_score_list.sort(key=itemgetter(1), reverse=True)
-    #print(move_score_list)
-    #for snake in data['board']['snakes']:
-       #print(data['you']['name'], snake['name'], get_distance_between_two_points(data['you']['body'][0], snake['body'][0]))
-    #print(data['you']['name'], "problesm", directions_that_lead_to_potential_50_50_head_on_head_collision(data))
     # use randomness to avoid being stuck in a loop
     equivalent_best_moves = []
     for move in move_score_list:
@@ -274,6 +268,10 @@ def get_distance_between_two_points(point1, point2):
     return distance
 
 
+def get_head_distance(snake1, snake2):
+    return get_distance_between_two_points(snake1['body'][0], snake2['body'][0])
+
+
 def get_directions_that_lead_towards_the_center(data):
     directions_that_lead_to_center = []
     you_head = data['you']['body'][0]
@@ -283,23 +281,6 @@ def get_directions_that_lead_towards_the_center(data):
         if get_distance_to_center(data, next_tile) < current_distance_to_center:
             directions_that_lead_to_center.append(d)
     return directions_that_lead_to_center
-
-
-def directions_that_lead_to_potential_50_50_head_on_head_collision(data):
-    directions_that_lead_to_potential_collision = []
-    you_head = data['you']['body'][0]
-    for snake in data['board']['snakes']:
-        if round(get_distance_between_two_points(you_head, snake['body'][0]), 2) == 3.16 or \
-            round(get_distance_between_two_points(you_head, snake['body'][0]), 2) == 2.83:
-            for my_d in directions:
-                if my_d not in directions_that_lead_to_potential_collision:
-                    for his_d in get_moves_without_direct_death(data, snake):
-                        my_next_tile = next_field_dic(my_d, you_head)
-                        his_next_tile = next_field_dic(his_d, snake['body'][0])
-                        new_distance = get_distance_between_two_points(my_next_tile, his_next_tile)
-                        if round(new_distance, 2) == 1.41:
-                            directions_that_lead_to_potential_collision.append(my_d)
-    return directions_that_lead_to_potential_collision
 
 
 def get_best_move_min_max(data, depth):
@@ -321,38 +302,35 @@ def get_best_move_min_max(data, depth):
     return random.choice(equivalent_best_moves)
 
 
+def remove_all_snakes_that_are_far_away(data_original):
+    data = copy.deepcopy(data_original)
+    for snake in data_original['board']['snakes']:
+        if get_distance_between_two_points(data['you']['body'][0], snake['body'][0]) >= 3.5:
+            data['board']['snakes'].remove(snake)
+
+
+def min_max_search_for_moves_without_unavoidable_head_collision(data):
+    directions_without_direct_death = get_moves_without_direct_death(data)
+    directions_that_lead_to_potential_unavoidable_head_on_head = []
+
+    for my_move in directions_without_direct_death:
+        possible_move_combinations = get_possible_moves_for_all_nearby_snakes(data, my_move)
+        for possibility in possible_move_combinations:
+            updated = game_engine.update(copy.deepcopy(data), possibility)
+            not_deadly_moves_in_update = get_moves_without_direct_death(updated)
+            if not get_moves_without_potential_deadly_head_on_head_collision(updated, not_deadly_moves_in_update):
+                directions_that_lead_to_potential_unavoidable_head_on_head.append(my_move)
+                break
+
+    return directions_that_lead_to_potential_unavoidable_head_on_head
+
+
 def create_map_with_duration(data):
     pass
 
 
 def probably_too_tight():
     pass
-
-
-
-"""
-def evaluate_position(data):
-    directions_without_direct_death = get_moves_without_direct_death(data)
-    if not directions_without_direct_death:
-        return 0
-    directions_without_potential_deadly_head_on_head_collision = \
-        get_moves_without_potential_deadly_head_on_head_collision(data, directions_without_direct_death)
-    directions_with_most_space = get_least_constraining_moves(data, directions_without_direct_death)
-    directions_with_food = get_moves_that_directly_lead_to_food(data)
-
-    score = 0
-    for d in directions:
-        if directions_without_direct_death.__contains__(d):
-            score += 1000
-        if directions_with_most_space.__contains__(d):
-            score += 100
-        if directions_without_potential_deadly_head_on_head_collision.__contains__(d):
-            score += 10
-        if directions_with_food.__contains__(d):
-            score += 1
-
-    return score
-"""
 
 
 def number_of_free_tiles(data):
@@ -366,8 +344,11 @@ def number_of_free_tiles(data):
                 empty_tiles.remove(location)
     return len(empty_tiles)
 
-
+evaluation_count = 0
 def evaluate_position(data):
+    global evaluation_count
+    evaluation_count += 1
+    #print(evaluation_count)
     if not data['board']['snakes']:
         return 0.5
     #print(im_dead(position))
@@ -418,6 +399,36 @@ def get_possible_moves_for_all_snakes(data, my_move):
     #print(possible_moves)
     all_possible_combinations = list(itertools.product(*possible_moves))
     return all_possible_combinations
+
+
+def get_possible_moves_for_all_nearby_snakes(data, my_move):
+    snakes = data['board']['snakes']
+    my_snake = data['you']
+    possible_moves = []
+
+    for snake in snakes:
+        if snake == my_snake:
+            possible_moves.append([my_move])
+        else:
+            data['you'] = snake
+            moves_without_direct_death = get_moves_without_direct_death(data)
+            if not moves_without_direct_death:
+                possible_moves.append(['up'])
+            elif get_head_distance(my_snake, snake) >= 3.5:  # if he is far away
+                moves_without_potential_head_collision =\
+                    get_moves_without_potential_deadly_head_on_head_collision(data, moves_without_direct_death)
+                if moves_without_potential_head_collision:
+                    possible_moves.append([random.choice(moves_without_potential_head_collision)])
+                else:
+                    possible_moves.append([random.choice(moves_without_direct_death)])
+            else:
+                possible_moves.append(moves_without_direct_death)
+    data['you'] = my_snake
+
+    #print(possible_moves)
+    all_possible_combinations = list(itertools.product(*possible_moves))
+    return all_possible_combinations
+
 
 
 def min_value(position, depth, my_move):
