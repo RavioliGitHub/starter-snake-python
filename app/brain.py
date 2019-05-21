@@ -218,7 +218,10 @@ def get_best_move_based_on_current_data(data):
     directions_with_most_space = get_least_constraining_moves(data, directions_without_direct_death)
     directions_with_food = get_moves_that_directly_lead_to_food(data)
     directions_that_lead_to_center = get_directions_that_lead_towards_the_center(data)
-    directions_that_lead_to_head_lockdown_min_max = min_max_search_for_moves_without_unavoidable_head_collision(data)
+    if len(data['board']['snakes']) != 1:
+        directions_that_lead_to_head_lockdown_min_max = min_max_search_for_moves_without_unavoidable_head_collision(data)
+    else:
+        directions_that_lead_to_head_lockdown_min_max = []
 
     move_score_list = []
     points = [0, 0, 0, 0]
