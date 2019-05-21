@@ -4,6 +4,7 @@ import time
 import brain
 #import pyperclip
 import main
+import pprint
 block_size = 20
 
 
@@ -22,6 +23,7 @@ class Window(Tk):
         self.canvas.pack()
         self.pause_replay, self.fps_button = self.create_buttons()
         self.Frame = Frame(self)
+        time.sleep(1)
         self.after(10, self.update_state_list)
         self.after(1000/self.FPS, self.draw_next_state)
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -158,7 +160,6 @@ class Window(Tk):
     def draw_on_canvas(self, data):
         canvas = self.canvas
         canvas.delete("all")
-        self.draw_other_info(data)
         board = data['board']
         height = board['height']
         width = board['width']
@@ -197,6 +198,7 @@ class Window(Tk):
                                      (x + 1) * block_size - head_offset, (y + 1) * block_size - head_offset),
                                     fill='purple')
             assert self.turn == data["turn"], (self.turn, data["turn"])
+            self.draw_other_info(data)
 
     def draw_other_info(self, data):
         canvas = self.canvas
@@ -210,7 +212,7 @@ class Window(Tk):
         snake_colors = ['green', 'blue', 'yellow', 'gray', 'brown', 'purple', 'black', 'orange']
 
         canvas.create_text((width * block_size + 100, 10), text='Turn: ' + str(data['turn']))
-
+        duration_map = brain.create_map_with_duration(data)
         for snake, i in zip(snakes, range(1, len(snakes)+1)):
             info_height = int(snake['id'])*block_size + 30
             color = self.snake_color_by_id[snake['id']]
@@ -225,7 +227,9 @@ class Window(Tk):
                                      width * block_size + 20 + snake['health'], info_height - 10 + 20),
                                     fill=color)
 
-
+            for body_part in snake['body']:
+                canvas.create_text((body_part['x'] * block_size + 10, body_part['y'] * block_size + 10)
+                                   , text=duration_map[int(body_part['x'])][int(body_part['y'])])
 
 
 directions = ['up', 'down', 'left', 'right']

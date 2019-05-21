@@ -120,12 +120,9 @@ def run_game_from_drawing():
 
     state_queue.put("GAME DONE")
     state_queue.put("REMOVE THIS FLAG WHEN DONE DRAWING")
-    a = 0
     while not state_queue.empty():
         time.sleep(0.5)
-        print(a)
-        a += 1
-    print("pout")
+
 
 def run_game(number_of_snakes, *args):
     state_queue = Queue.Queue()
@@ -164,5 +161,5 @@ def run_game(number_of_snakes, *args):
 # run_game_from_drawing()
 # run_game_without_window(2)
 # replay_logs("PainterTestFile.txt")
-# run_game(8)
+# run_game(2)
 # replay_logs_using_engine("PainterTestFile.txt")

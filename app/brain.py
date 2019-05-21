@@ -5,6 +5,7 @@ from operator import itemgetter
 import itertools
 import game_engine
 import copy
+import pprint
 
 
 """
@@ -79,6 +80,13 @@ def list_of_reachable_tiles(start, deadly_locations, width, height):
                     queue.append(cur_neighbour)
 
     return visited
+
+
+def get_number_of_reachable_tiles(data, head):
+    width = data['board']['width']
+    height = data['board']['height']
+    deadly_locations = get_deadly_locations(data)
+    return len(list_of_reachable_tiles((head['x'], head['y']), deadly_locations, width, height))
 
 
 def get_deadly_locations(data):
@@ -217,29 +225,35 @@ def get_best_move_based_on_current_data(data):
         get_moves_without_potential_deadly_head_on_head_collision(data, directions_without_direct_death)
     directions_with_most_space = get_least_constraining_moves(data, directions_without_direct_death)
     directions_with_food = get_moves_that_directly_lead_to_food(data)
-    directions_that_lead_to_center = get_directions_that_lead_towards_the_center(data)
+    distances_to_center = get_distance_to_center_if_move_is_made(data)
     if len(data['board']['snakes']) != 1:
         directions_that_lead_to_head_lockdown_min_max = min_max_search_for_moves_without_unavoidable_head_collision(data)
     else:
         directions_that_lead_to_head_lockdown_min_max = []
 
+    too_tight = get_directions_that_are_probably_too_tight(data)
+    if too_tight:
+        pass
+        # print(data['you']['name'], too_tight)
+
     move_score_list = []
     points = [0, 0, 0, 0]
-    for d, score in zip(directions, points):
+    for d, score, distance_to_center in zip(directions, points, distances_to_center):
         if directions_without_direct_death.__contains__(d):
-            score += 100000
+            score += 1000000
         if directions_with_most_space.__contains__(d):
-            score += 10000
+            score += 100000
         if directions_without_potential_deadly_head_on_head_collision.__contains__(d):
-            score += 1000
+            score += 10000
         if not directions_that_lead_to_head_lockdown_min_max.__contains__(d):
-            score += 100
-        if directions_that_lead_to_center.__contains__(d):
-            score += 10
+            score += 1000
+        if True:  # distance to center points
+            score += 100 - distance_to_center  # needs to always be bigger than 0
         if directions_with_food.__contains__(d):
-            score += 1
+            score += 10
         move_score_list.append((d, score))
 
+    create_map_with_duration(data)
     move_score_list.sort(key=itemgetter(1), reverse=True)
     # use randomness to avoid being stuck in a loop
     equivalent_best_moves = []
@@ -279,11 +293,30 @@ def get_directions_that_lead_towards_the_center(data):
     directions_that_lead_to_center = []
     you_head = data['you']['body'][0]
     current_distance_to_center = get_distance_to_center(data, you_head)
+    smallest_distance_to_center = 1000
     for d in directions:
         next_tile = next_field_dic(d, you_head)
-        if get_distance_to_center(data, next_tile) < current_distance_to_center:
+        if get_distance_to_center(data, next_tile) < smallest_distance_to_center:
+            smallest_distance_to_center = get_distance_to_center(data, next_tile)
+
+    for d in directions:
+        next_tile = next_field_dic(d, you_head)
+        # print(data['you']['name'], d, smallest_distance_to_center, get_distance_to_center(data, next_tile), get_distance_to_center(data, next_tile) == smallest_distance_to_center)
+        if get_distance_to_center(data, next_tile) == smallest_distance_to_center:
             directions_that_lead_to_center.append(d)
+
     return directions_that_lead_to_center
+
+
+def get_distance_to_center_if_move_is_made(data):
+    distances_to_center = []
+    you_head = data['you']['body'][0]
+    for d in directions:
+        next_tile = next_field_dic(d, you_head)
+        distance = get_distance_to_center(data, next_tile)
+        distances_to_center.append(distance)
+
+    return distances_to_center
 
 
 def get_best_move_min_max(data, depth):
@@ -329,11 +362,29 @@ def min_max_search_for_moves_without_unavoidable_head_collision(data):
 
 
 def create_map_with_duration(data):
-    pass
+    time_tiles_are_blocked = []
+    for x in range(data['board']['width']):
+        time_tiles_are_blocked.append([])
+        for y in range(data['board']['height']):
+            time_tiles_are_blocked[x].append(0)
+
+    for snake in data['board']['snakes']:
+        durations = range(len(snake['body']))
+        durations.reverse()
+        for body_part, position in zip(snake['body'], durations):
+            time_tiles_are_blocked[int(body_part['x'])][int(body_part['y'])] = position
+
+    return time_tiles_are_blocked
 
 
-def probably_too_tight():
-    pass
+def get_directions_that_are_probably_too_tight(data):
+    directions_that_are_probably_too_tight = []
+    for d in get_moves_without_direct_death(data):
+        new_theoretical_head = next_field_dic(d, data['you']['body'][0])
+        if get_number_of_reachable_tiles(data, new_theoretical_head) < len(data['you']['body']):
+            directions_that_are_probably_too_tight.append(d)
+            print(data['you']['name'], d, get_number_of_reachable_tiles(data, new_theoretical_head), len(data['you']['body']))
+    return directions_that_are_probably_too_tight
 
 
 def number_of_free_tiles(data):
@@ -346,6 +397,7 @@ def number_of_free_tiles(data):
             if location in empty_tiles:
                 empty_tiles.remove(location)
     return len(empty_tiles)
+
 
 evaluation_count = 0
 def evaluate_position(data):
