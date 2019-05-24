@@ -194,6 +194,46 @@ def get_least_constraining_moves(data, directions_without_direct_death):
     return directions_with_most_space
 
 
+def get_food_im_closest_to(data):
+    board = data['board']
+    food = board['food']
+    you = data['you']
+    you_head = you['body'][0]
+    close_apples = []
+    closest_apple = None
+    distance_to_closest_apple = 100
+    for apple in food:
+        someone_else_will_be_first = False
+        my_distance = get_distance_between_two_points(you_head, apple)
+        for snake in board['snakes']:
+            if snake == you:
+                continue
+            his_distance = get_distance_between_two_points(snake['body'][0], apple)
+            if his_distance < my_distance:
+                someone_else_will_be_first = True
+                break
+        if not someone_else_will_be_first:
+            close_apples.append(apple)
+            if my_distance < distance_to_closest_apple:
+                closest_apple = apple
+                distance_to_closest_apple = my_distance
+
+    return closest_apple
+
+
+def get_distance_to_apple_if_move_is_made(data, apple):
+    if apple is None:
+        return [0, 0, 0, 0]
+    distances_to_apple = []
+    you_head = data['you']['body'][0]
+    for d in directions:
+        next_tile = next_field_dic(d, you_head)
+        distance = get_distance_between_two_points(next_tile, apple)
+        distances_to_apple.append(distance)
+
+    return distances_to_apple
+
+
 def get_moves_that_directly_lead_to_food(data):
     board = data['board']
     food = board['food']
@@ -231,22 +271,22 @@ def get_best_move_based_on_current_data(data):
     else:
         directions_that_lead_to_head_lockdown_min_max = []
 
-    too_tight = get_directions_that_are_probably_too_tight(data)
-    if too_tight:
-        pass
-        # print(data['you']['name'], too_tight)
+    closest_apple = get_food_im_closest_to(data)
+    distances_to_closest_apple = get_distance_to_apple_if_move_is_made(data, closest_apple)
 
     move_score_list = []
     points = [0, 0, 0, 0]
-    for d, score, distance_to_center in zip(directions, points, distances_to_center):
+    for d, score, distance_to_center, distance_to_apple in zip(directions, points, distances_to_center, distances_to_closest_apple):
         if directions_without_direct_death.__contains__(d):
-            score += 1000000
+            score += 10000000
         if directions_with_most_space.__contains__(d):
-            score += 100000
+            score += 1000000
         if directions_without_potential_deadly_head_on_head_collision.__contains__(d):
-            score += 10000
+            score += 100000
         if not directions_that_lead_to_head_lockdown_min_max.__contains__(d):
-            score += 1000
+            score += 10000
+        if data['you']['health'] < 100:
+            score += 1000 - distance_to_apple
         if True:  # distance to center points
             score += 100 - distance_to_center  # needs to always be bigger than 0
         if directions_with_food.__contains__(d):
@@ -383,7 +423,6 @@ def get_directions_that_are_probably_too_tight(data):
         new_theoretical_head = next_field_dic(d, data['you']['body'][0])
         if get_number_of_reachable_tiles(data, new_theoretical_head) < len(data['you']['body']):
             directions_that_are_probably_too_tight.append(d)
-            print(data['you']['name'], d, get_number_of_reachable_tiles(data, new_theoretical_head), len(data['you']['body']))
     return directions_that_are_probably_too_tight
 
 
