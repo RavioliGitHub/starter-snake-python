@@ -6,7 +6,12 @@ import itertools
 import game_engine
 import copy
 import pprint
+"""
+MAKE LOTS OF SMALL RULE THAT ARE AlWAYS true
+1 move rules
+then, just test priorities
 
+"""
 
 """
 BEHAVIOR I WANT TO ENFORCE
@@ -253,6 +258,24 @@ def get_moves_that_directly_lead_to_food(data):
     return moves_that_directly_lead_to_food
 
 
+def get_moves_that_directly_lead_to_tails(data):
+
+    you = data['you']
+    you_head = you['body'][0]
+
+    tails = []
+    for snake in data['board']['snakes']:
+        tails.append(snake['body'][-1])
+
+    moves_that_directly_lead_to_tails = []
+    for d in directions:
+        next_tile = next_field_dic(d, you_head)
+        if tails.__contains__(next_tile):
+            moves_that_directly_lead_to_tails.append(d)
+
+    return moves_that_directly_lead_to_tails
+
+
 def get_best_move_based_on_current_data(data):
     directions_without_direct_death = get_moves_without_direct_death(data)
 
@@ -274,21 +297,26 @@ def get_best_move_based_on_current_data(data):
     closest_apple = get_food_im_closest_to(data)
     distances_to_closest_apple = get_distance_to_apple_if_move_is_made(data, closest_apple)
 
+    directions_with_tails = get_moves_that_directly_lead_to_tails(data)
+
     move_score_list = []
     points = [0, 0, 0, 0]
     for d, score, distance_to_center, distance_to_apple in zip(directions, points, distances_to_center, distances_to_closest_apple):
         if directions_without_direct_death.__contains__(d):
-            score += 10000000
+            score += 100000000
         if directions_with_most_space.__contains__(d):
-            score += 1000000
+            score += 10000000
         if directions_without_potential_deadly_head_on_head_collision.__contains__(d):
-            score += 100000
+            score += 1000000
         if not directions_that_lead_to_head_lockdown_min_max.__contains__(d):
-            score += 10000
-        if data['you']['health'] < 100:
-            score += 1000 - distance_to_apple
+            score += 100000
+        if closest_apple and data['you']['health'] < 100:
+            score += 10000 - distance_to_apple*500
+            assert 10000 - distance_to_apple*500 > 100
         if True:  # distance to center points
-            score += 100 - distance_to_center  # needs to always be bigger than 0
+            score += 1000 - distance_to_center*20  # needs to always be bigger than 0
+        if directions_with_tails.__contains__(d):
+            score += 100
         if directions_with_food.__contains__(d):
             score += 10
         move_score_list.append((d, score))
