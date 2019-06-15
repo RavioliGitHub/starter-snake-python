@@ -26,6 +26,10 @@ BEHAVIOR I WANT TO ENFORCE
 
 5.) Kill if possible
 
+6.) 1v1 component ?
+
+7.) Avoid spaces with many nearby bigger snakes
+
 """
 directions = ['up', 'down', 'left', 'right']
 
