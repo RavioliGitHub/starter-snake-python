@@ -30,6 +30,14 @@ BEHAVIOR I WANT TO ENFORCE
 
 7.) Avoid spaces with many nearby bigger snakes
 
+TODO
+Prefer head on head with snakes of equal length
+Improve to tight space calculation, as it fucks up sometimes
+Map where you avoid zones with many bigger heads
+Auto start leaderboard extraction
+Plot leaderboard extraction
+Create macro so that isNotMe becomes data[snake] != data[you] ? 
+
 """
 directions = ['up', 'down', 'left', 'right']
 
@@ -170,6 +178,31 @@ def get_moves_without_potential_deadly_head_on_head_collision(data, directions_w
     return directions_without_deadly_head_on_head_collision
 
 
+def get_moves_without_potential_deadly_head_on_head_collision_with_longer_snakes(data, directions_without_direct_death):
+    board = data['board']
+    snakes = board['snakes']
+    you = data['you']
+    you_head = you['body'][0]
+
+    heads_of_longer_enemies = []
+    for snake in snakes:
+        if snake['body'] != you['body'] and len(snake['body']) > len(you['body']):
+            heads_of_longer_enemies.append(snake['body'][0])
+
+    possible_deadly_head_on_head_collision = []
+    for head in heads_of_longer_enemies:
+        for d in directions:
+            possible_deadly_head_on_head_collision.append(next_field(d, head))
+
+    directions_without_deadly_head_on_head_collision = []
+    for d in directions_without_direct_death:
+        next_tile = next_field(d, you_head)
+        if not possible_deadly_head_on_head_collision.__contains__(next_tile):
+            directions_without_deadly_head_on_head_collision.append(d)
+
+    return directions_without_deadly_head_on_head_collision
+
+
 def get_least_constraining_moves(data, directions_without_direct_death):
     board = data['board']
     height = board['height']
@@ -290,6 +323,8 @@ def get_best_move_based_on_current_data(data):
         return directions_without_direct_death[0]
     directions_without_potential_deadly_head_on_head_collision = \
         get_moves_without_potential_deadly_head_on_head_collision(data, directions_without_direct_death)
+    directions_without_potential_head_on_head_with_longer_snakes = \
+        get_moves_without_potential_deadly_head_on_head_collision_with_longer_snakes(data, directions_without_direct_death)
     directions_with_most_space = get_least_constraining_moves(data, directions_without_direct_death)
     directions_with_food = get_moves_that_directly_lead_to_food(data)
     distances_to_center = get_distance_to_center_if_move_is_made(data)
@@ -307,8 +342,10 @@ def get_best_move_based_on_current_data(data):
     points = [0, 0, 0, 0]
     for d, score, distance_to_center, distance_to_apple in zip(directions, points, distances_to_center, distances_to_closest_apple):
         if directions_without_direct_death.__contains__(d):
-            score += 100000000
+            score += 1000000000
         if directions_with_most_space.__contains__(d):
+            score += 100000000
+        if directions_without_potential_head_on_head_with_longer_snakes.__contains__(d):
             score += 10000000
         if directions_without_potential_deadly_head_on_head_collision.__contains__(d):
             score += 1000000
