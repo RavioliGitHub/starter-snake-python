@@ -160,6 +160,6 @@ def run_game(number_of_snakes, *args):
 
 #run_game_from_drawing()
 # run_game_without_window(2)
-# replay_logs("PainterTestFile.txt")
-run_game(6)
+#replay_logs("PainterTestFile.txt")
+#run_game(2)
 # replay_logs_using_engine("PainterTestFile.txt")

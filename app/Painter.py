@@ -19,7 +19,7 @@ class Window(Tk):
         self.pause = False
         self.FPS = 60
         self.snake_color_by_id = self.create_snake_color_by_id(data)
-        self.canvas = Canvas(master=self, width=self.width * block_size * 2 + 500, height=self.height * block_size)
+        self.canvas = Canvas(master=self, width=self.width * block_size * 2 + 700, height=self.height * block_size)
         self.canvas.pack()
         self.pause_replay, self.fps_button = self.create_buttons()
         self.Frame = Frame(self)
@@ -165,6 +165,7 @@ class Window(Tk):
         width = board['width']
         snakes = board['snakes']
         food_locations = board['food']
+        danger_map = brain.get_map_of_head_danger(data)
 
         for x in range(width):
             for y in range(height):
@@ -176,6 +177,11 @@ class Window(Tk):
             y = food['y']
             canvas.create_rectangle((x * block_size, y * block_size, (x + 1) * block_size, (y + 1) * block_size),
                                     fill='red', outline='black')
+
+        for x in range(width):
+            for y in range(height):
+                canvas.create_text((x * block_size + 10, y * block_size + 10)
+                                   , text=danger_map[x][y])
 
         for snake in snakes:
             color = self.snake_color_by_id[snake['id']]
@@ -226,6 +232,10 @@ class Window(Tk):
             canvas.create_rectangle((width * block_size + 20, info_height - 10,
                                      width * block_size + 20 + snake['health'], info_height - 10 + 20),
                                     fill=color)
+            if snake == data['you']:
+                canvas.create_text(
+                    (width * block_size + 400, info_height)
+                    , text="you")
 
             for body_part in snake['body']:
                 canvas.create_text((body_part['x'] * block_size + 10, body_part['y'] * block_size + 10)

@@ -31,12 +31,13 @@ BEHAVIOR I WANT TO ENFORCE
 7.) Avoid spaces with many nearby bigger snakes
 
 TODO
-Prefer head on head with snakes of equal length
+Prefer head on head with snakes of equal length, also for lockdown
 Improve to tight space calculation, as it fucks up sometimes
 Map where you avoid zones with many bigger heads
 Auto start leaderboard extraction
 Plot leaderboard extraction
 Create macro so that isNotMe becomes data[snake] != data[you] ? 
+Need min max algo if 1v1
 
 """
 directions = ['up', 'down', 'left', 'right']
@@ -313,7 +314,7 @@ def get_moves_that_directly_lead_to_tails(data):
     return moves_that_directly_lead_to_tails
 
 
-def get_best_move_based_on_current_data(data):
+def get_best_move_based_on_current_data(data, timeLimit):
     directions_without_direct_death = get_moves_without_direct_death(data)
 
     if not directions_without_direct_death:
@@ -364,6 +365,17 @@ def get_best_move_based_on_current_data(data):
 
     create_map_with_duration(data)
     move_score_list.sort(key=itemgetter(1), reverse=True)
+
+
+    deadly_moves, winning_moves, available_moves = simple_best_move(data, timeLimit)
+    if winning_moves:
+        return random.choice(winning_moves)
+    elif available_moves:
+        for move in move_score_list:
+            if move[0] in deadly_moves:
+                move = (move[0], 0)
+
+
     # use randomness to avoid being stuck in a loop
     equivalent_best_moves = []
     for move in move_score_list:
@@ -391,6 +403,15 @@ def get_distance_between_two_points(point1, point2):
     x2 = point2['x']
     y2 = point2['y']
     distance = pow(pow((x2 - x1), 2) + pow((y2 - y1), 2), 0.5)
+    return distance
+
+
+def get_board_distance_between_two_points(point1, point2):
+    x1 = point1['x']
+    y1 = point1['y']
+    x2 = point2['x']
+    y2 = point2['y']
+    distance = abs(x2-x1) + abs(y2-y1)
     return distance
 
 
@@ -507,6 +528,45 @@ def number_of_free_tiles(data):
     return len(empty_tiles)
 
 
+def get_map_of_head_danger(data):
+    board = data['board']
+    width = board['width']
+    height = board['height']
+    snakes = board['snakes']
+    you = data['you']
+    you_head = you['body'][0]
+    danger_zone = 5
+
+    deadly_enemy_heads = []
+    for snake in snakes:
+        if snake['body'] != you['body'] and len(snake['body']) >= len(you['body']):
+            deadly_enemy_heads.append(snake['body'][0])
+
+    danger_map = []
+    for x in range(data['board']['width']):
+        danger_map.append([])
+        for y in range(data['board']['height']):
+            danger_map[x].append(0)
+    fill_danger_map(data, danger_map)
+    return danger_map
+
+
+def fill_danger_map(data, danger_map):
+    board = data['board']
+    snakes = board['snakes']
+    width = board['width']
+    height = board['height']
+    you = data['you']
+
+    for snake in snakes:
+        if snake != you and len(snake['body']) >= len(you['body']):
+            enemy_head = snake['body'][0]
+            for x in range(width):
+                for y in range(height):
+                    danger_map[x][y] += max(0, 6-get_board_distance_between_two_points({'x': x, 'y': y}, enemy_head))
+                   #danger_map[x][y] = min(abs(5-danger_map[x][y]), 5)
+
+
 evaluation_count = 0
 def evaluate_position(data):
     global evaluation_count
@@ -620,3 +680,71 @@ def max_value(data, depth):
 
         # print('max', depth, get_moves_without_direct_death(position), child_scores)
         return max(child_scores)
+
+
+def simple_evaluation(data):
+    if im_dead(data):
+        return 0
+    elif len(data['board']['snakes']) == 1:
+        return 1
+    else:
+        return 0.5
+
+def simple_max_value(data, depth, timeLimit):
+    if im_dead(data) or not get_moves_without_direct_death(data):
+        return 0
+    elif len(data['board']['snakes']) == 1:
+        return 1
+    if depth == 0:
+        return simple_evaluation(data)
+    else:
+        child_scores = []
+        for move in get_moves_without_direct_death(data):
+            if time.time() > timeLimit:
+                return "cancel"
+            child_scores.append(simple_min_value(data, depth, move, timeLimit))
+
+        position = data
+        #print(position)
+        #print(position['turn'], position['you']['name'], depth, max(child_scores), child_scores, get_moves_without_direct_death(position))
+
+        #print('max', depth, get_moves_without_direct_death(position), child_scores)
+        return max(child_scores)
+
+
+def simple_min_value(position, depth, my_move, timeLimit):
+    child_scores = []
+    for move_combination in get_possible_moves_for_all_snakes(position, my_move):
+        if time.time() > timeLimit:
+            return "cancel"
+        updated_position = game_engine.update(position, move_combination)
+        child_scores.append(simple_max_value(updated_position, depth-1, timeLimit))
+
+    #print('min', depth, child_scores)
+    return min(child_scores)
+
+
+def simple_best_move(data, timeLimit):
+    available_moves = ['up', 'down', 'left', 'right']
+    deadly_moves = []
+    winning_moves = []
+
+    depth = 0
+    while available_moves:
+        depth += 1
+        for move in available_moves:
+            simple_score = simple_min_value(data, depth, move, timeLimit)
+            if simple_score == 0:
+                available_moves.remove(move)
+                deadly_moves.append(move)
+            elif simple_score == 1:
+                available_moves.remove(move)
+                winning_moves.append(move)
+            elif simple_score == 0.5:
+                pass
+            else:
+                assert simple_score == "cancel"
+                return deadly_moves, winning_moves, available_moves
+    return deadly_moves, winning_moves, available_moves
+
+
