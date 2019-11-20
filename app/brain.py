@@ -42,6 +42,12 @@ Need min max algo if 1v1
 """
 directions = ['up', 'down', 'left', 'right']
 
+#More tail follow ?
+#https://play.battlesnake.com/g/10450b66-391b-47ec-8aa8-38704fa3e660/
+
+#For min max add better death sentences
+
+
 
 def next_field(direction, current_position):
     if direction == 'up':
@@ -373,7 +379,9 @@ def get_best_move_based_on_current_data(data, timeLimit):
     elif available_moves:
         for move in move_score_list:
             if move[0] in deadly_moves:
+                move_score_list.remove(move)
                 move = (move[0], 0)
+                move_score_list.append(move)
 
 
     # use randomness to avoid being stuck in a loop
