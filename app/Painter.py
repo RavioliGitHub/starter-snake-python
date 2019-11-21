@@ -8,6 +8,12 @@ import pprint
 block_size = 20
 
 
+print_duration = False
+print_reachTime = True
+print_headDanger = False
+print_escape_points = True
+
+
 class Window(Tk):
     def __init__(self, data, state_queue):
         Tk.__init__(self, className="MySnakeWindow")
@@ -178,10 +184,12 @@ class Window(Tk):
             canvas.create_rectangle((x * block_size, y * block_size, (x + 1) * block_size, (y + 1) * block_size),
                                     fill='red', outline='black')
 
-        for x in range(width):
-            for y in range(height):
-                canvas.create_text((x * block_size + 10, y * block_size + 10)
-                                   , text=danger_map[x][y])
+        if print_headDanger:
+            for x in range(width):
+                for y in range(height):
+                    pass
+                    canvas.create_text((x * block_size + 10, y * block_size + 10)
+                                       , text=danger_map[x][y])
 
         for snake in snakes:
             color = self.snake_color_by_id[snake['id']]
@@ -237,10 +245,38 @@ class Window(Tk):
                     (width * block_size + 400, info_height)
                     , text="you")
 
-            for body_part in snake['body']:
-                canvas.create_text((body_part['x'] * block_size + 10, body_part['y'] * block_size + 10)
-                                   , text=duration_map[int(body_part['x'])][int(body_part['y'])])
+            if print_duration:
+                for body_part in snake['body']:
+                    canvas.create_text((body_part['x'] * block_size + 10, body_part['y'] * block_size + 10)
+                                       , text=duration_map[int(body_part['x'])][int(body_part['y'])])
 
+            if print_reachTime:
+                tiles_others_reach_before_me = brain.tiles_others_can_reach_before_me(data)
+                for tile in tiles_others_reach_before_me:
+                    head_offset = 5
+                    x = tile['x']
+                    y = tile['y']
+                    canvas.create_rectangle((x * block_size + head_offset, y * block_size + head_offset,
+                                             (x + 1) * block_size - head_offset, (y + 1) * block_size - head_offset),
+                                            fill='red')
+
+                reach_time_map = brain.create_map_with_reachtime(data, data['you'])
+                for x in range(width):
+                    for y in range(height):
+                        canvas.create_text((x * block_size + 10, y * block_size + 10)
+                                           , text=reach_time_map[x][y])
+
+            if print_escape_points:
+                escape_points, escape_timings = brain.get_escape_points(data, data['you'])
+                for tile, timing in zip(escape_points, escape_timings):
+                    head_offset = 5
+                    x = tile['x']
+                    y = tile['y']
+                    canvas.create_rectangle((x * block_size + head_offset, y * block_size + head_offset,
+                                             (x + 1) * block_size - head_offset, (y + 1) * block_size - head_offset),
+                                            fill='orange')
+                    canvas.create_text((x * block_size + 10, y * block_size + 10)
+                                       , text=str(timing))
 
 directions = ['up', 'down', 'left', 'right']
 

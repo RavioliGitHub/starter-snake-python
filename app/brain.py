@@ -30,6 +30,10 @@ BEHAVIOR I WANT TO ENFORCE
 
 7.) Avoid spaces with many nearby bigger snakes
 
+
+You need a fixed thing for 8 snakes
+And a minimax for 1v1
+
 TODO
 Prefer head on head with snakes of equal length, also for lockdown
 Improve to tight space calculation, as it fucks up sometimes
@@ -46,6 +50,9 @@ directions = ['up', 'down', 'left', 'right']
 #https://play.battlesnake.com/g/10450b66-391b-47ec-8aa8-38704fa3e660/
 
 #For min max add better death sentences
+
+#Algorithms for blocked space
+#Blocked space into minmax
 
 
 
@@ -90,6 +97,22 @@ def not_deadly_location_on_board(goal, deadly_locations, width, height):
     return True
 
 
+def not_deadly_location_on_board_dic(goal, deadly_locations, width, height):
+    if goal['x'] < 0 or goal['x'] >= width or goal['y'] < 0 or goal['y'] >= height:
+        return False
+    if deadly_locations.__contains__(goal):
+        return False
+    return True
+
+
+def on_board(tile, data):
+    width = data['board']['width']
+    height = data['board']['height']
+    if tile['x'] < 0 or tile['x'] >= width or tile['y'] < 0 or tile['y'] >= height:
+        return False
+    return True
+
+
 def list_of_reachable_tiles(start, deadly_locations, width, height):
     visited = []
     queue = [start]
@@ -121,6 +144,18 @@ def get_deadly_locations(data):
     for snake in snakes:
         for e in snake['body'][:-1]:
             deadly_locations.append((e['x'], e['y']))
+
+    return deadly_locations
+
+
+def get_deadly_locations_dic(data):
+    board = data['board']
+    snakes = board['snakes']
+
+    deadly_locations = []
+    for snake in snakes:
+        for e in snake['body'][:-1]:
+            deadly_locations.append(e)
 
     return deadly_locations
 
@@ -321,6 +356,7 @@ def get_moves_that_directly_lead_to_tails(data):
 
 
 def get_best_move_based_on_current_data(data, timeLimit):
+    #print(check_if_space_is_escapable(data, data['you']))
     directions_without_direct_death = get_moves_without_direct_death(data)
 
     if not directions_without_direct_death:
@@ -345,10 +381,14 @@ def get_best_move_based_on_current_data(data, timeLimit):
 
     directions_with_tails = get_moves_that_directly_lead_to_tails(data)
 
+    escapable_directions = get_directions_that_are_escapable(data, directions_without_direct_death)
+
     move_score_list = []
     points = [0, 0, 0, 0]
     for d, score, distance_to_center, distance_to_apple in zip(directions, points, distances_to_center, distances_to_closest_apple):
         if directions_without_direct_death.__contains__(d):
+            score += 10000000000
+        if d in escapable_directions:
             score += 1000000000
         if directions_with_most_space.__contains__(d):
             score += 100000000
@@ -360,7 +400,8 @@ def get_best_move_based_on_current_data(data, timeLimit):
             score += 100000
         if closest_apple and data['you']['health'] < 100:
             score += 10000 - distance_to_apple*500
-            assert 10000 - distance_to_apple*500 > 100
+            #TODO remove assertion before using in tournament
+            #assert 10000 - distance_to_apple*500 > 100
         if True:  # distance to center points
             score += 1000 - distance_to_center*20  # needs to always be bigger than 0
         if directions_with_tails.__contains__(d):
@@ -370,6 +411,7 @@ def get_best_move_based_on_current_data(data, timeLimit):
         move_score_list.append((d, score))
 
     create_map_with_duration(data)
+    create_map_with_reachtime(data, data['you'])
     move_score_list.sort(key=itemgetter(1), reverse=True)
 
 
@@ -515,6 +557,71 @@ def create_map_with_duration(data):
     return time_tiles_are_blocked
 
 
+def create_map_with_reachtime(data, snake):
+    time_to_reach_tile = []
+    for x in range(data['board']['width']):
+        time_to_reach_tile.append([])
+        for y in range(data['board']['height']):
+            time_to_reach_tile[x].append('inf')
+
+    start = snake['body'][0]
+    time_to_reach_tile[start['x']][start['y']] = 0
+    visited = []
+    queue = [start]
+    width = data['board']['width']
+    height = data['board']['height']
+    deadly_locations = get_deadly_locations_dic(data)
+
+    while queue:
+        cur = queue.pop(0)
+        visited.append(cur)
+        for d in directions:
+            cur_neighbour = next_field_dic(d, cur)
+            if cur_neighbour not in visited and cur_neighbour not in queue:
+                if not_deadly_location_on_board_dic(cur_neighbour, deadly_locations, width, height):
+                    queue.append(cur_neighbour)
+                    distance_to_head = time_to_reach_tile[cur['x']][cur['y']]
+                    time_to_reach_tile[cur_neighbour['x']][cur_neighbour['y']] = distance_to_head + 1
+
+    return time_to_reach_tile
+
+
+def tiles_others_can_reach_before_me(data):
+    width = data['board']['width']
+    height = data['board']['height']
+    snake_map_dic = {}
+    list_of_tiles_others_reach_before_me = []
+
+    for snake in data['board']['snakes']:
+        reach_time_map = create_map_with_reachtime(data, snake)
+        snake_map_dic[snake['id']] = reach_time_map
+
+    for x in range(width):
+        for y in range(height):
+            tile = {'x':x, 'y':y}
+            if not i_reach_tile_first(tile, snake_map_dic, data):
+                list_of_tiles_others_reach_before_me.append(tile)
+
+    return list_of_tiles_others_reach_before_me
+
+
+def i_reach_tile_first(tile, snake_map_dic, data):
+    for snake in data['board']['snakes']:
+        if snake == data['you']:
+            continue
+        else:
+            my_reach_time = snake_map_dic[data['you']['id']][tile['x']][tile['y']]
+            enemy_reach_time = snake_map_dic[snake['id']][tile['x']][tile['y']]
+
+            if my_reach_time > enemy_reach_time:
+                return False
+            if my_reach_time == enemy_reach_time:
+                if not len(data['you']['body']) > len(snake['body']):
+                    return False
+    return True
+
+
+
 def get_directions_that_are_probably_too_tight(data):
     directions_that_are_probably_too_tight = []
     for d in get_moves_without_direct_death(data):
@@ -522,6 +629,70 @@ def get_directions_that_are_probably_too_tight(data):
         if get_number_of_reachable_tiles(data, new_theoretical_head) < len(data['you']['body']):
             directions_that_are_probably_too_tight.append(d)
     return directions_that_are_probably_too_tight
+
+
+def check_if_space_is_escapable(data, snake):
+    number_of_tiles = get_number_of_reachable_tiles(data, snake['body'][0])
+    escape_points, escape_timings = get_escape_points(data, snake)
+    #TODO take snake length into account
+    #Maybe not necessary ?
+
+    return min(escape_timings) <= number_of_tiles
+
+
+def get_directions_that_are_escapable(data, directions_without_direct_death):
+    you = data['you']
+    you_head = you['body'][0]
+    escapable_directions = []
+
+    for direction in directions_without_direct_death:
+        new_head = next_field_dic(direction, you_head)
+        old_snake = data['you']
+        new_snake = copy.deepcopy(data['you'])
+        new_snake['body'].insert(0, new_head)
+        if new_head not in data['board']['food']:
+            del new_snake['body'][-1]
+        index = data['board']['snakes'].index(old_snake)
+        data['board']['snakes'][index] = new_snake
+        data['you'] = new_snake
+
+        if check_if_space_is_escapable(data, data['you']):
+            escapable_directions.append(direction)
+
+        data['board']['snakes'][index] = old_snake
+        data['you'] = old_snake
+
+    return escapable_directions
+
+
+def get_escape_points(data, snake):
+    duration_map = create_map_with_duration(data)
+    escape_points = []
+    escape_timings = []
+
+    start = snake['body'][0]
+    visited = []
+    queue = [start]
+    width = data['board']['width']
+    height = data['board']['height']
+    deadly_locations = get_deadly_locations_dic(data)
+
+    while queue:
+        cur = queue.pop(0)
+        visited.append(cur)
+        for d in directions:
+            cur_neighbour = next_field_dic(d, cur)
+            if cur_neighbour not in visited and cur_neighbour not in queue:
+                if not_deadly_location_on_board_dic(cur_neighbour, deadly_locations, width, height):
+                    queue.append(cur_neighbour)
+                else:
+                    if on_board(cur_neighbour, data):
+                        escape_points.append(cur_neighbour)
+                        escape_timings.append(duration_map[cur_neighbour['x']][cur_neighbour['y']])
+
+    return escape_points, escape_timings
+
+
 
 
 def number_of_free_tiles(data):
@@ -698,6 +869,7 @@ def simple_evaluation(data):
     else:
         return 0.5
 
+
 def simple_max_value(data, depth, timeLimit):
     if im_dead(data) or not get_moves_without_direct_death(data):
         return 0
@@ -740,6 +912,7 @@ def simple_best_move(data, timeLimit):
     depth = 0
     while available_moves:
         depth += 1
+        print(depth)
         for move in available_moves:
             simple_score = simple_min_value(data, depth, move, timeLimit)
             if simple_score == 0:

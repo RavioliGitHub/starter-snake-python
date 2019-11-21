@@ -423,7 +423,7 @@ def create_game(number_of_snakes):
     FOOD_AT_START = 0
     SNAKE_START_LENGTH = 3
     START_POSITIONS = [(1,1), (WIDTH-2, HEIGHT-2), (1, HEIGHT-2), (WIDTH-2, 1),
-                       (round(WIDTH/2), 1), (WIDTH-2, round(HEIGHT/2)), (round(WIDTH/2), HEIGHT-2), (1, round(HEIGHT/2))]
+                       (int(round(WIDTH/2)), 1), (WIDTH-2, int(round(HEIGHT/2))), (int(round(WIDTH/2)), HEIGHT-2), (1, int(round(HEIGHT/2)))]
 
     data = {}
     data['game'] = {}

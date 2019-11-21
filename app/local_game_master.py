@@ -145,7 +145,7 @@ def run_game(number_of_snakes, *args):
             data['you'] = snake
             start = time.time()
             moves.append(main.get_move_response_string(data))
-            brain.min_max_search_for_moves_without_unavoidable_head_collision(data)
+            # brain.min_max_search_for_moves_without_unavoidable_head_collision(data)
             # print(round(time.time()-start, 2))
         data = game_engine.update(data, moves)
         if random.randint(0, 100) < FOOD_SPAWN_CHANCE:
@@ -161,5 +161,5 @@ def run_game(number_of_snakes, *args):
 #run_game_from_drawing()
 # run_game_without_window(2)
 #replay_logs("PainterTestFile.txt")
-#run_game(2)
+#run_game(4)
 #replay_logs_using_engine("PainterTestFile.txt")
