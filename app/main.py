@@ -62,37 +62,18 @@ def move():
 state_list = []
 def get_move_response_string(data):
     global previous_data
-    timeToRespond = 0.2
     start_time = time.time()
-    #game_engine.save_to_logs(data, "test1.txt")
-    #print('turn:', data['turn'])
 
-    #print(data['turn'] > 0 and previous_data != "f" and len(data['board']['snakes'][0]['body']) > 1 and
-         # previous_data['game']['id'] == data['game']['id'])
-    #print(data['turn'] > 0, previous_data != "f", len(data['board']['snakes'][0]['body']) > 1,
-          #previous_data != "f" and previous_data['game']['id'] == data['game']['id'])
-    """
-    if data['turn'] > 0 and previous_data != "f" and len(data['board']['snakes'][0]['body']) > 1 and \
-            previous_data['game']['id'] == data['game']['id']:
-        print('check_prediction')
-        played_moves = game_engine.get_played_moves(previous_data, data)
-        previous_data_prediction = game_engine.update(previous_data, played_moves)
-        game_engine.check_if_update_was_accurate(previous_data_prediction, data)
-    """
     previous_data = data
-    #print(brain.evaluate_position(data))
-    #print(brain.max_value(data, 2))
-    if data['you']['name'] == "1":
-        #game_engine.save_to_logs(data, "test1.txt")
-        pass
 
-    timeFrame = 0.0
+    timeFrame = 0.2
     #print("remeber to reset timeframe before commting")
     #TODO RESET TIMEFRAME
     timeLimit = time.time() + timeFrame
+    print("timelimit", timeLimit)
     my_move_response = brain.get_best_move_based_on_current_data(data, timeLimit)
 
-    #print(time.time() - start_time)
+    print(time.time() - start_time)
     print("Move response: " + my_move_response)
     return my_move_response
 
