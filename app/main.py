@@ -56,6 +56,7 @@ def start():
 @bottle.post('/move')
 def move():
     data = bottle.request.json
+    print("Recieved move request ", data['turn'])
     my_move_response = get_move_response_string(data)
     return move_response(my_move_response)
 
