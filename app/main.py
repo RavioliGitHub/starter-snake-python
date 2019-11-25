@@ -64,6 +64,8 @@ def get_move_response_string(data):
     global previous_data
     start_time = time.time()
 
+    print("Responding to move ", data['turn'])
+
     previous_data = data
 
     timeFrame = 0.2

@@ -49,6 +49,7 @@ BEHAVIOR I WANT TO ENFORCE
 8.) Try full minimax
 
 
+Starvation rule 
 You need a fixed thing for 8 snakes
 And a minimax for 1v1
 Then replace deepcopy by pooling
