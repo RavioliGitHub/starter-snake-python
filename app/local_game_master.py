@@ -195,5 +195,5 @@ def run_game_where_i_play(data):
 #run_game_from_drawing()
 # run_game_without_window(2)
 #replay_logs("PainterTestFile.txt")
-run_game(8)
+#run_game(1)
 #replay_logs_using_engine("PainterTestFile.txt")

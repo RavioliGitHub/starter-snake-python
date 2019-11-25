@@ -423,11 +423,10 @@ def get_moves_that_directly_lead_to_tails(data):
 def get_best_move_based_on_current_data(data, timeLimit):
     log(data, "##### GET BEST MOVE #####")
 
-    log(data, find_way_out(data))
-
-    log(data, check_if_space_is_escapable(data, data['you']['body'][0]))
     directions_without_direct_death = get_moves_without_direct_death(data)
     log(data, "directions_without_direct_death: "+ str(directions_without_direct_death))
+
+    escapabilty_dic = get_directions_that_are_escapable(data, directions_without_direct_death)
 
     if not directions_without_direct_death:
         log(data, "No directions without death, so we go up")
@@ -436,6 +435,8 @@ def get_best_move_based_on_current_data(data, timeLimit):
         log(data, "Only one direction without death, so we go " + directions_without_direct_death[0])
         return directions_without_direct_death[0]
 
+
+    #TODO, directions with guaranteed head on head collision
     directions_without_potential_deadly_head_on_head_collision = \
         get_moves_without_potential_deadly_head_on_head_collision(data, directions_without_direct_death)
     log(data, "directions_without_potential_deadly_head_on_head_collision: " + str(directions_without_potential_deadly_head_on_head_collision))
@@ -468,18 +469,18 @@ def get_best_move_based_on_current_data(data, timeLimit):
     directions_with_tails = get_moves_that_directly_lead_to_tails(data)
     log(data, "directions_with_tails: " + str(directions_with_tails))
 
-    escapable_directions = get_directions_that_are_escapable(data, directions_without_direct_death)
-    log(data, "escapable_directions: " + str(escapable_directions))
-
     move_score_list = []
     points = [0, 0, 0, 0]
     for d, score, distance_to_center, distance_to_apple in zip(directions, points, distances_to_center, distances_to_closest_apple):
         if directions_without_direct_death.__contains__(d):
+            score += 100000000000
+        if d not in escapabilty_dic['sure_death']:
             score += 10000000000
-        if d in escapable_directions:
+        if d in escapabilty_dic['sure_life']:
             score += 1000000000
-        if directions_with_most_space.__contains__(d):
-            score += 100000000
+        #TODO verify if it is actually a good idead to remove
+        #if directions_with_most_space.__contains__(d):
+            #score += 100000000
         if directions_without_potential_head_on_head_with_longer_snakes.__contains__(d):
             score += 10000000
         if directions_without_potential_deadly_head_on_head_collision.__contains__(d):
@@ -519,6 +520,9 @@ def get_best_move_based_on_current_data(data, timeLimit):
     for move in move_score_list:
         if move[1] == move_score_list[0][1]:
             equivalent_best_moves.append(move[0])
+
+    log(data, 'move_score_list' + str(move_score_list))
+    log(data, 'equivalent_best_moves' + str(equivalent_best_moves))
     return random.choice(equivalent_best_moves)
 
 
@@ -727,17 +731,28 @@ def check_if_space_is_escapable(data, head):
 
 
 def get_directions_that_are_escapable(data, directions_without_direct_death):
-    you = data['you']
-    you_head = you['body'][0]
-    escapable_directions = []
-
+    #TODO mostly fails when food is involved
+    #Eg, i could escape on a path if the snakes ate no food
+    sure_death = []
+    sure_life = []
+    unknown_survival = []
     for direction in directions_without_direct_death:
-        new_head = next_field_dic(direction, you_head)
+        new_head = next_field_dic(direction, data['you']['body'][0])
+        escape = find_way_out(data, new_head)
 
-        if check_if_space_is_escapable(data, new_head):
-            escapable_directions.append(direction)
+        if escape == "Cannot escape" or escape is None:
+            sure_death.append(direction)
+        elif escape == "Time limit":
+            unknown_survival.append(direction)
+        else:
+            #either can reach tail or a path
+            sure_life.append(direction)
 
-    return escapable_directions
+    log(data, ("sure_death= " + str(sure_death)))
+    log(data, ("sure_life= " + str(sure_life)))
+    log(data, ("unknown= " + str(unknown_survival)))
+
+    return {'sure_death':sure_death, 'sure_life':sure_life, 'unknown_survival':unknown_survival}
 
 
 def get_escape_points(data, start_tile):
@@ -772,8 +787,7 @@ def get_escape_points(data, start_tile):
 
 
 
-def i_can_reach_a_tail(data):
-    start = data['you']['body'][0]
+def i_can_reach_a_tail(data, start):
     reachable = list_of_reachable_tiles_dic(data, (start['x'], start['y']))
     tails = []
     for snake in data['board']['snakes']:
@@ -784,13 +798,12 @@ def i_can_reach_a_tail(data):
     return False
 
 
-def find_way_out(data):
-    start = data['you']['body'][0]
+def find_way_out(data, start):
 
-    if i_can_reach_a_tail(data):
+    if i_can_reach_a_tail(data, start):
         return "Can reach a tail"
 
-    if not check_if_space_is_escapable(data, data['you']['body'][0]):
+    if not check_if_space_is_escapable(data, start):
         return "Cannot escape"
 
     timeFrame= 0.1

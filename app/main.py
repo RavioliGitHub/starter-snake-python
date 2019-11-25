@@ -86,7 +86,7 @@ def get_move_response_string(data):
         #game_engine.save_to_logs(data, "test1.txt")
         pass
 
-    timeFrame = 0.0
+    timeFrame = 0.3
     #print("remeber to reset timeframe before commting")
     #TODO RESET TIMEFRAME
     timeLimit = time.time() + timeFrame
