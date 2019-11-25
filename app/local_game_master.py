@@ -105,6 +105,7 @@ def run_game_from_drawing():
         end_conditions = 1
 
     while len(data['board']['snakes']) > end_conditions:
+        print("####################################")
         print(data['turn'])
         state_queue.put(data)
         moves = []
@@ -138,6 +139,40 @@ def run_game(number_of_snakes, *args):
         end_conditions = 1
 
     while len(data['board']['snakes']) > end_conditions:
+        #print("####################################")
+        #print("Turn " + str(data['turn']))
+        state_queue.put(data)
+        moves = []
+        for snake in data['board']['snakes']:
+            data['you'] = snake
+            start = time.time()
+            moves.append(main.get_move_response_string(data))
+            # brain.min_max_search_for_moves_without_unavoidable_head_collision(data)
+            # print(round(time.time()-start, 2))
+        data = game_engine.update(data, moves)
+        if random.randint(0, 100) < FOOD_SPAWN_CHANCE:
+            game_engine.add_food(data)
+    state_queue.put(data)
+
+    print("Game calculations done")
+    state_queue.put("GAME DONE")
+    state_queue.put("REMOVE THIS FLAG WHEN DONE DRAWING")
+    while not state_queue.empty():
+        time.sleep(0.5)
+
+
+def run_game_where_i_play(data):
+    state_queue = Queue.Queue()
+    FOOD_SPAWN_CHANCE = 20
+
+    number_of_snakes = len(data['board']['snakes'])
+    thread.start_new_thread(Window, (data, state_queue))
+    if number_of_snakes == 1:
+        end_conditions = 0
+    else:
+        end_conditions = 1
+
+    while len(data['board']['snakes']) > end_conditions:
         print(data['turn'])
         state_queue.put(data)
         moves = []
@@ -157,9 +192,8 @@ def run_game(number_of_snakes, *args):
     while not state_queue.empty():
         time.sleep(0.5)
 
-
 #run_game_from_drawing()
 # run_game_without_window(2)
 #replay_logs("PainterTestFile.txt")
-#run_game(4)
+run_game(8)
 #replay_logs_using_engine("PainterTestFile.txt")

@@ -1,15 +1,28 @@
-from Tkinter import Tk, Label, Button, Canvas, Frame
+from Tkinter import Tk, Label, Button, Canvas, Frame, Text
+import Tkinter as tk
 import game_engine
 import time
 import brain
+import math
+from printer import Logger
 #import pyperclip
 import main
 import pprint
+from printer import Logger
+
+
+def log(turn, snake, message):
+    Logger().log(turn, snake, message)
+
+
+def log(data, message):
+    Logger().log(data['turn'], data['you'], message)
+
 block_size = 20
 
 
 print_duration = False
-print_reachTime = True
+print_reachTime = False
 print_headDanger = False
 print_escape_points = True
 
@@ -26,7 +39,12 @@ class Window(Tk):
         self.FPS = 60
         self.snake_color_by_id = self.create_snake_color_by_id(data)
         self.canvas = Canvas(master=self, width=self.width * block_size * 2 + 700, height=self.height * block_size)
-        self.canvas.pack()
+        self.canvas.grid(row=0, column=0)
+        self.textFrame = Frame(master=self, bg='orange', height=100)
+        self.textFrame.grid()
+        self.textWidgets = {}
+        self.prepareLogLabels(data)
+
         self.pause_replay, self.fps_button = self.create_buttons()
         self.Frame = Frame(self)
         time.sleep(1)
@@ -35,12 +53,31 @@ class Window(Tk):
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.mainloop()
 
+
+    def prepareLogLabels(self, data):
+        totalLineSpace = 30
+        labelHeight = int(math.floor(totalLineSpace/len(data['board']['snakes'])))
+
+        i = 0
+        for snake in data['board']['snakes']:
+            # titles
+            Label(master=self.textFrame, text=snake['name']).grid(row=i, column=0)
+
+            #Actual labels
+            textLabel = Text(master=self.textFrame, height=labelHeight, width=140)
+            self.textWidgets[snake['id']] = textLabel
+            textLabel.grid(row=i, column=1)
+            i += 1
+
     def calculate_moves(self, *args):
         data = self.state_list[self.turn]
         snakes = data['board']['snakes']
         for snake in snakes:
             data['you'] = snake
-            print(snake['name'], main.get_move_response_string(data))
+            response = main.get_move_response_string(data)
+            log(data, response)
+            print(snake['name'], response)
+        self.update_text_lables(data)
 
     def calculate_this_state_by_engine(self, *args):
         if self.turn == 0:
@@ -112,35 +149,38 @@ class Window(Tk):
         self.draw_on_canvas(self.state_list[self.turn])
 
     def create_buttons(self):
+        buttonFrame = Frame(master=self)
+        buttonFrame.grid(row=0, column=1)
+
         self.bind("<Escape>", self.on_closing)
-        pause = Button(master=self, command=self.pause_flip, text="Pause")
-        pause.pack()
+        pause = Button(master=buttonFrame, command=self.pause_flip, text="Pause")
+        pause.grid()
         self.bind("<space>", self.pause_flip)
-        fps_button = Button(master=self, text=self.FPS)
+        fps_button = Button(master=buttonFrame, text=self.FPS)
         fps_button.bind('<Button-1>', self.increase_fps)
         self.bind("<Up>", self.increase_fps)
         fps_button.bind('<Button-3>', self.decrease_fps)
         self.bind("<Down>", self.decrease_fps)
-        fps_button.pack()
-        reload = Button(master=self, command=self.reload_game, text="Reload")
-        reload.pack()
-        forward = Button(master=self, command=self.forward, text="Forward")
-        forward.pack()
+        fps_button.grid()
+        reload = Button(master=buttonFrame, command=self.reload_game, text="Reload")
+        reload.grid()
+        forward = Button(master=buttonFrame, command=self.forward, text="Forward")
+        forward.grid()
         self.bind("<Right>", self.forward)
-        backward = Button(master=self, command=self.backward, text="Backward")
-        backward.pack()
+        backward = Button(master=buttonFrame, command=self.backward, text="Backward")
+        backward.grid()
         self.bind("<Left>", self.backward)
-        save_button = Button(master=self, command=self.save_to_logs, text="Save to logs")
-        save_button.pack()
-        copy_data_to_clipboard_button = Button(master=self, command=self.copy_current_data_to_clipboard, text="Clip")
-        copy_data_to_clipboard_button.pack()
-        grid_positions = Button(master=self, command=self.show_coordinates, text="Coordinates")
-        grid_positions.pack()
-        engine_calculation = Button(master=self, command=self.calculate_this_state_by_engine, text="Engine")
-        engine_calculation.pack()
+        save_button = Button(master=buttonFrame, command=self.save_to_logs, text="Save to logs")
+        save_button.grid()
+        copy_data_to_clipboard_button = Button(master=buttonFrame, command=self.copy_current_data_to_clipboard, text="Clip")
+        copy_data_to_clipboard_button.grid()
+        grid_positions = Button(master=buttonFrame, command=self.show_coordinates, text="Coordinates")
+        grid_positions.grid()
+        engine_calculation = Button(master=buttonFrame, command=self.calculate_this_state_by_engine, text="Engine")
+        engine_calculation.grid()
         self.bind("<e>", self.calculate_this_state_by_engine)
-        move_calculation = Button(master=self, command=self.calculate_moves, text="Calculate moves")
-        move_calculation.pack()
+        move_calculation = Button(master=buttonFrame, command=self.calculate_moves, text="Calculate moves")
+        move_calculation.grid()
         self.bind("<c>", self.calculate_moves)
         return pause, fps_button
 
@@ -212,7 +252,8 @@ class Window(Tk):
                                      (x + 1) * block_size - head_offset, (y + 1) * block_size - head_offset),
                                     fill='purple')
             assert self.turn == data["turn"], (self.turn, data["turn"])
-            self.draw_other_info(data)
+        self.draw_other_info(data)
+        self.update_text_lables(data)
 
     def draw_other_info(self, data):
         canvas = self.canvas
@@ -267,7 +308,7 @@ class Window(Tk):
                                            , text=reach_time_map[x][y])
 
             if print_escape_points:
-                escape_points, escape_timings = brain.get_escape_points(data, data['you'])
+                escape_points, escape_timings = brain.get_escape_points(data, data['you']['body'][0])
                 for tile, timing in zip(escape_points, escape_timings):
                     head_offset = 5
                     x = tile['x']
@@ -277,6 +318,24 @@ class Window(Tk):
                                             fill='orange')
                     canvas.create_text((x * block_size + 10, y * block_size + 10)
                                        , text=str(timing))
+
+    def update_text_lables(self, data):
+        for snake in data['board']['snakes']:
+            label = self.textWidgets[snake['id']]
+
+            log = ["None"]
+            if str(data['turn']) in Logger().logs.keys():
+                if snake['id'] in Logger().logs[str(data['turn'])].keys():
+                    log = Logger().logs[str(data['turn'])][snake['id']]
+
+            label.delete('1.0', tk.END)
+            for line in log:
+                label.insert(tk.END, line)
+                label.insert(tk.END, "\n")
+
+            label.insert(tk.END, "#"*10)
+            label.insert(tk.END, "\n")
+        self.update_idletasks()
 
 directions = ['up', 'down', 'left', 'right']
 
