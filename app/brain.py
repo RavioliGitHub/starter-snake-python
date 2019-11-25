@@ -16,10 +16,12 @@ try:
         Logger().log(data['turn'], data['you'], message)
 except ImportError:
     def log(turn, snake, message):
-        print(message)
+        #print(message)
+        pass
 
     def log(data, message):
-        print(message)
+        #print(message)
+        pass
 """
 MAKE LOTS OF SMALL RULE THAT ARE AlWAYS true
 1 move rules

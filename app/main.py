@@ -86,13 +86,14 @@ def get_move_response_string(data):
         #game_engine.save_to_logs(data, "test1.txt")
         pass
 
-    timeFrame = 0.3
+    timeFrame = 0.0
     #print("remeber to reset timeframe before commting")
     #TODO RESET TIMEFRAME
     timeLimit = time.time() + timeFrame
     my_move_response = brain.get_best_move_based_on_current_data(data, timeLimit)
 
     #print(time.time() - start_time)
+    print("Move response: " + my_move_response)
     return my_move_response
 
 
