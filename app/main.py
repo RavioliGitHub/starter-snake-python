@@ -56,7 +56,6 @@ def start():
 @bottle.post('/move')
 def move():
     data = bottle.request.json
-    print("Recieved move request ", data['turn'])
     my_move_response = get_move_response_string(data)
     return move_response(my_move_response)
 
@@ -65,19 +64,14 @@ def get_move_response_string(data):
     global previous_data
     start_time = time.time()
 
-    print("Responding to move ", data['turn'])
-
     previous_data = data
 
-    timeFrame = 0.2
+    timeFrame = 0.0
     #print("remeber to reset timeframe before commting")
     #TODO RESET TIMEFRAME
     timeLimit = time.time() + timeFrame
-    print("timelimit", timeLimit)
     my_move_response = brain.get_best_move_based_on_current_data(data, timeLimit)
 
-    print(time.time() - start_time)
-    print("Move response: " + my_move_response)
     return my_move_response
 
 

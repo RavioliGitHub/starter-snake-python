@@ -10,7 +10,12 @@ import json
 import situation_creator
 
 
-def replay_logs(file):
+def replay_logs(file, *startindex):
+    if not startindex:
+        startindex = 0
+    else:
+        startindex = startindex[0]
+
     logs = open(file, "r")
     states = logs.read()
     logs.close()
@@ -19,7 +24,8 @@ def replay_logs(file):
     state_queue = Queue.Queue()
     thread.start_new_thread(Window, (first_state, state_queue))
 
-    for state in state_list:
+    print(startindex)
+    for state in state_list[startindex:]:
         if state:
             state_queue.put(json.loads(state.replace("'", '"')))
 
@@ -194,6 +200,6 @@ def run_game_where_i_play(data):
 
 #run_game_from_drawing()
 # run_game_without_window(2)
-#replay_logs("PainterTestFile.txt")
-#run_game(1)
+#replay_logs("PainterTestFile.txt", 78)
+#run_game(2)
 #replay_logs_using_engine("PainterTestFile.txt")

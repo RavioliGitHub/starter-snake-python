@@ -28,14 +28,14 @@ print_escape_points = True
 
 
 class Window(Tk):
-    def __init__(self, data, state_queue):
+    def __init__(self, data, state_queue, pause=False):
         Tk.__init__(self, className="MySnakeWindow")
         self.height = data['board']['height']
         self.width = data['board']['width']
         self.state_queue = state_queue
         self.state_list = []
         self.turn = 0
-        self.pause = False
+        self.pause = pause
         self.FPS = 60
         self.snake_color_by_id = self.create_snake_color_by_id(data)
         self.canvas = Canvas(master=self, width=self.width * block_size * 2 + 700, height=self.height * block_size)
@@ -251,7 +251,7 @@ class Window(Tk):
             canvas.create_rectangle((x * block_size + head_offset, y * block_size + head_offset,
                                      (x + 1) * block_size - head_offset, (y + 1) * block_size - head_offset),
                                     fill='purple')
-            assert self.turn == data["turn"], (self.turn, data["turn"])
+            #assert self.turn == data["turn"], (self.turn, data["turn"])
         self.draw_other_info(data)
         self.update_text_lables(data)
 

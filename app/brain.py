@@ -508,6 +508,9 @@ def get_best_move_based_on_current_data(data, timeLimit):
 
 
     deadly_moves, winning_moves, available_moves = simple_best_move(data, timeLimit)
+    log(data, 'deadly_moves ' + str(deadly_moves))
+    log(data, 'winning_moves ' + str(winning_moves))
+    log(data, 'available_moves ' + str(available_moves))
     if winning_moves:
         return random.choice(winning_moves)
     elif available_moves:
@@ -947,7 +950,9 @@ def get_possible_moves_for_all_snakes(data, my_move):
     my_snake = data['you']
     possible_moves = []
 
+    #print("turn ", data['turn'], " name ", data['you']['name'])
     for snake in snakes:
+        #print(snake['name'])
         if snake == my_snake:
             possible_moves.append([my_move])
         else:
@@ -958,6 +963,7 @@ def get_possible_moves_for_all_snakes(data, my_move):
             else:
                 possible_moves.append(moves_without_direct_death)
     data['you'] = my_snake
+    #print(possible_moves)
 
     #print(possible_moves)
     all_possible_combinations = list(itertools.product(*possible_moves))
@@ -1044,12 +1050,6 @@ def simple_max_value(data, depth, timeLimit):
             if time.time() > timeLimit:
                 return "cancel"
             child_scores.append(simple_min_value(data, depth, move, timeLimit))
-
-        position = data
-        #print(position)
-        #print(position['turn'], position['you']['name'], depth, max(child_scores), child_scores, get_moves_without_direct_death(position))
-
-        #print('max', depth, get_moves_without_direct_death(position), child_scores)
         return max(child_scores)
 
 
@@ -1058,10 +1058,27 @@ def simple_min_value(position, depth, my_move, timeLimit):
     for move_combination in get_possible_moves_for_all_snakes(position, my_move):
         if time.time() > timeLimit:
             return "cancel"
+        if my_move == 'left' and position['you']['name'] == u'1' and depth == 1:
+            print(position['turn'])
+            print(move_combination)
+            if move_combination == ('up', 'left', 'up', 'left'):
+                print("heeeere")
         updated_position = game_engine.update(position, move_combination)
+        if my_move == 'left' and position['you']['name'] == u'1' and depth == 1:
+            print(position['turn'])
+            print(move_combination)
+            if move_combination == ('up', 'left', 'up', 'left'):
+                print("heeeere")
+                print(im_dead(updated_position))
         child_scores.append(simple_max_value(updated_position, depth-1, timeLimit))
 
-    #print('min', depth, child_scores)
+        if my_move == 'left' and position['you']['name'] == u'1' and depth == 1:
+            print(position['turn'])
+            print(move_combination)
+            if move_combination == ('up', 'left', 'up', 'left'):
+                print("heeeere")
+                print(im_dead(updated_position))
+
     return min(child_scores)
 
 
@@ -1070,12 +1087,16 @@ def simple_best_move(data, timeLimit):
     deadly_moves = []
     winning_moves = []
 
-    depth = 0
+    max_depth = 0
     while available_moves:
-        depth += 1
-        log(data, "Reached depth " + str(depth))
+        max_depth += 1
+        log(data, "Reached depth " + str(max_depth))
         for move in available_moves:
-            simple_score = simple_min_value(data, depth, move, timeLimit)
+            if move == 'left':
+                print(data['you']['name'])
+            if move == 'left' and data['you']['name'] == u'1':
+                print("here")
+            simple_score = simple_min_value(data, max_depth, move, timeLimit)
             if simple_score == 0:
                 available_moves.remove(move)
                 deadly_moves.append(move)
