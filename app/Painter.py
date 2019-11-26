@@ -24,7 +24,9 @@ block_size = 20
 print_duration = False
 print_reachTime = False
 print_headDanger = False
-print_escape_points = True
+print_escape_points = False
+print_future_duration = True
+print_future_escape_points = True
 
 
 class Window(Tk):
@@ -59,15 +61,19 @@ class Window(Tk):
         labelHeight = int(math.floor(totalLineSpace/len(data['board']['snakes'])))
 
         i = 0
+        j = 0
         for snake in data['board']['snakes']:
             # titles
-            Label(master=self.textFrame, text=snake['name']).grid(row=i, column=0)
+            Label(master=self.textFrame, text=snake['name']).grid(row=i, column=j)
 
             #Actual labels
-            textLabel = Text(master=self.textFrame, height=labelHeight, width=140)
+            textLabel = Text(master=self.textFrame, height=labelHeight, width=60)
             self.textWidgets[snake['id']] = textLabel
-            textLabel.grid(row=i, column=1)
+            textLabel.grid(row=i, column=j+1)
             i += 1
+            if i == 2:
+                i = 0
+                j += 2
 
     def calculate_moves(self, *args):
         data = self.state_list[self.turn]
@@ -247,7 +253,7 @@ class Window(Tk):
                                        , fill=color, width=1)
             x = snake['body'][0]['x']
             y = snake['body'][0]['y']
-            head_offset = 5
+            head_offset = 3
             canvas.create_rectangle((x * block_size + head_offset, y * block_size + head_offset,
                                      (x + 1) * block_size - head_offset, (y + 1) * block_size - head_offset),
                                     fill='purple')
@@ -275,6 +281,8 @@ class Window(Tk):
                                , text=snake['name'])
             canvas.create_text((width * block_size + 200, info_height)
                                , text=snake['health'])
+            canvas.create_text((width * block_size + 350, info_height)
+                               , text=len(snake['body']))
             canvas.create_text(
                 (width * block_size + 300, info_height)
                 , text=round(brain.get_distance_to_center(data, snake['body'][0]), 2))
@@ -291,8 +299,8 @@ class Window(Tk):
                     canvas.create_text((body_part['x'] * block_size + 10, body_part['y'] * block_size + 10)
                                        , text=duration_map[int(body_part['x'])][int(body_part['y'])])
 
-            if print_reachTime:
-                tiles_others_reach_before_me = brain.tiles_others_can_reach_before_me(data)
+            if print_reachTime or print_future_duration:
+                tiles_others_reach_before_me, future_duration_map = brain.tiles_others_can_reach_before_me(data)
                 for tile in tiles_others_reach_before_me:
                     head_offset = 5
                     x = tile['x']
@@ -301,6 +309,13 @@ class Window(Tk):
                                              (x + 1) * block_size - head_offset, (y + 1) * block_size - head_offset),
                                             fill='red')
 
+            if print_future_duration:
+                for x in range(width):
+                    for y in range(height):
+                        canvas.create_text((x * block_size + 10, y * block_size + 10)
+                                           , text=future_duration_map[x][y])
+
+            if print_reachTime:
                 reach_time_map = brain.create_map_with_reachtime(data, data['you'])
                 for x in range(width):
                     for y in range(height):
@@ -308,7 +323,20 @@ class Window(Tk):
                                            , text=reach_time_map[x][y])
 
             if print_escape_points:
-                escape_points, escape_timings = brain.get_escape_points(data, data['you']['body'][0])
+                deadly_locations_dic = brain.get_deadly_locations_dic(data)
+                duration_map = brain.create_map_with_duration(data)
+                escape_points, escape_timings = brain.get_escape_points(data, data['you']['body'][0], deadly_locations_dic, brain)
+
+            if print_future_escape_points:
+                list_of_tiles_others_reach_before_me, duration_map_if_enemy_moves_to_tile = brain.tiles_others_can_reach_before_me(data)
+                deadly_locations = brain.get_deadly_locations(data)
+                deadly_locations = deadly_locations + brain.transform_to_tuple_list(list_of_tiles_others_reach_before_me)
+                deadly_locations_dic = brain.transform_to_dic_list(deadly_locations)
+                # check for duplicates
+
+                escape_points, escape_timings = brain.get_escape_points(data, data['you']['body'][0], deadly_locations_dic, duration_map_if_enemy_moves_to_tile)
+
+            if print_escape_points or print_future_escape_points:
                 for tile, timing in zip(escape_points, escape_timings):
                     head_offset = 5
                     x = tile['x']
