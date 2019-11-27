@@ -3,8 +3,10 @@ import os
 import random
 import bottle
 import brain
+import brain2
 import time
 import sys
+import Game_object_pool
 from api import ping_response, start_response, move_response, end_response
 import game_engine
 
@@ -40,6 +42,7 @@ def start():
     global previous_data
     data = bottle.request.json
     previous_data = data
+    Game_object_pool.GamePool().init_pool(data)
 
     """
     TODO: If you intend to have a stateful snake AI,
@@ -56,8 +59,10 @@ def start():
 @bottle.post('/move')
 def move():
     data = bottle.request.json
+    print("Received move request ", data['turn'])
     my_move_response = get_move_response_string(data)
     return move_response(my_move_response)
+
 
 state_list = []
 def get_move_response_string(data):
@@ -66,13 +71,21 @@ def get_move_response_string(data):
 
     previous_data = data
 
-    timeFrame = 0.0
+
+    timeFrame = 0.2
     #print("remeber to reset timeframe before commting")
     #TODO RESET TIMEFRAME
     timeLimit = time.time() + timeFrame
-    my_move_response = brain.get_best_move_based_on_current_data(data, timeLimit)
+    response2 = brain2.get_best_move_based_on_current_data(data, timeLimit)
 
-    return my_move_response
+    if type(response2) == str:
+        response2 = (response2, [])
+
+    my_move_response2, move_score_list2 = response2
+
+    print(time.time()-start_time)
+    print("Responded to move request ", data['turn'], " with ", my_move_response2, move_score_list2)
+    return my_move_response2
 
 
 @bottle.post('/end')

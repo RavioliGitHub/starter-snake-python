@@ -70,10 +70,10 @@ class Window(Tk):
             textLabel = Text(master=self.textFrame, height=labelHeight, width=60)
             self.textWidgets[snake['id']] = textLabel
             textLabel.grid(row=i, column=j+1)
-            i += 1
-            if i == 2:
-                i = 0
-                j += 2
+            j += 2
+            if j == 4:
+                j = 0
+                i += 1
 
     def calculate_moves(self, *args):
         data = self.state_list[self.turn]

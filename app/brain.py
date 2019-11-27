@@ -61,6 +61,8 @@ I need - A fast heuristik on wether a space is escapable
 
 -time window to search for escape path ?
 
+-dont follow tails in ways that make you die if the snake eats food
+
 Zone where im dead       - Zone where im alive
 ######################## - ###################
 
@@ -532,7 +534,7 @@ def get_best_move_based_on_current_data(data, timeLimit):
 
     log(data, 'move_score_list' + str(move_score_list))
     log(data, 'equivalent_best_moves' + str(equivalent_best_moves))
-    return random.choice(equivalent_best_moves)
+    return random.choice(equivalent_best_moves), move_score_list
 
 
 def get_distance_to_center(data, position):
@@ -630,12 +632,13 @@ def min_max_search_for_moves_without_unavoidable_head_collision(data):
     for my_move in directions_without_direct_death:
         possible_move_combinations = get_possible_moves_for_all_nearby_snakes(data, my_move)
         for possibility in possible_move_combinations:
-            updated = game_engine.update(copy.deepcopy(data), possibility)
+            updated = game_engine.pool_update(copy.deepcopy(data), possibility)
             not_deadly_moves_in_update = get_moves_without_direct_death(updated)
-            if not get_moves_without_potential_deadly_head_on_head_collision(updated, not_deadly_moves_in_update):
+            moves_without_potential_deadly_head_on_head_collision = \
+                get_moves_without_potential_deadly_head_on_head_collision(updated, not_deadly_moves_in_update)
+            if not moves_without_potential_deadly_head_on_head_collision:
                 directions_that_lead_to_potential_unavoidable_head_on_head.append(my_move)
                 break
-
     return directions_that_lead_to_potential_unavoidable_head_on_head
 
 
@@ -997,7 +1000,7 @@ def get_possible_moves_for_all_nearby_snakes(data, my_move):
             moves_without_direct_death = get_moves_without_direct_death(data)
             if not moves_without_direct_death:
                 possible_moves.append(['up'])
-            elif get_head_distance(my_snake, snake) >= 3.5:  # if he is far away
+            elif get_head_distance(my_snake, snake) >= 4.5:  # if he is far away
                 moves_without_potential_head_collision =\
                     get_moves_without_potential_deadly_head_on_head_collision(data, moves_without_direct_death)
                 if moves_without_potential_head_collision:

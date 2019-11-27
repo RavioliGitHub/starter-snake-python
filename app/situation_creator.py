@@ -120,7 +120,7 @@ class Window(Tk):
                 return
         # if snake not found
         snake = create_void_snake(snake_id)
-        for i in range(3):
+        for i in range(1):
             snake['body'].append(to_dic(coord))
         data['board']['snakes'].append(snake)
 
