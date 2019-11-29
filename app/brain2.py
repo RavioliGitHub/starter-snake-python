@@ -51,6 +51,15 @@ BEHAVIOR I WANT TO ENFORCE
 8.) Try full minimax
 
 
+Priotities:
+1) Improve min max with space
+2) Fix min max head on head
+3) Don't follow tails if you die if enemy eats food
+4) Fix escape path with food
+5) Fix escape path generally
+6) Find source of timeouts
+7) when 50/50 head  on head chooses path where other is less likely to go
+
 Starvation rule 
 You need a fixed thing for 8 snakes
 And a minimax for 1v1
@@ -835,7 +844,6 @@ def get_best_move_based_on_current_data(data, time_limit):
 
     directions_with_tails = get_moves_that_directly_lead_to_tails(data)
     log(data, "directions_with_tails: " + str(directions_with_tails))
-
 
     deadly_moves, winning_moves, available_moves = simple_best_move(data, time_limit)
     print(state_count)

@@ -22,11 +22,11 @@ block_size = 20
 
 
 print_duration = False
-print_reachTime = False
+print_reachTime = True
 print_headDanger = False
 print_escape_points = False
-print_future_duration = True
-print_future_escape_points = True
+print_future_duration = False
+print_future_escape_points = False
 
 
 class Window(Tk):
