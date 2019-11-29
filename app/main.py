@@ -11,7 +11,6 @@ from api import ping_response, start_response, move_response, end_response
 import game_engine
 
 
-previous_data = "f"
 @bottle.route('/')
 def index():
     return '''
@@ -58,19 +57,16 @@ def start():
 
 @bottle.post('/move')
 def move():
+    #print("Received move request, unpacking data")
     data = bottle.request.json
-    print("Received move request ", data['turn'])
+    #print("Received move request ", data['turn'])
     my_move_response = get_move_response_string(data)
     return move_response(my_move_response)
 
 
 state_list = []
 def get_move_response_string(data):
-    global previous_data
     start_time = time.time()
-
-    previous_data = data
-
 
     timeFrame = 0.2
     #print("remeber to reset timeframe before commting")
@@ -83,15 +79,13 @@ def get_move_response_string(data):
 
     my_move_response2, move_score_list2 = response2
 
-    print(time.time()-start_time)
-    print("Responded to move request ", data['turn'], " with ", my_move_response2, move_score_list2)
+    #print(time.time()-start_time)
+    #print("Responded to move request ", data['turn'], " with ", my_move_response2, move_score_list2)
     return my_move_response2
 
 
 @bottle.post('/end')
 def end():
-    global previous_data
-    previous_data = "f"
     data = bottle.request.json
 
     """

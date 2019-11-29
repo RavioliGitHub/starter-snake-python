@@ -9,6 +9,7 @@ from printer import Logger
 import main
 import pprint
 from printer import Logger
+import brain2
 
 
 def log(turn, snake, message):
@@ -22,7 +23,7 @@ block_size = 20
 
 
 print_duration = False
-print_reachTime = True
+print_reachTime = False
 print_headDanger = False
 print_escape_points = False
 print_future_duration = False
@@ -154,6 +155,14 @@ class Window(Tk):
             self.turn = 0
         self.draw_on_canvas(self.state_list[self.turn])
 
+    def swap_you(self):
+        data = self.state_list[self.turn]
+        my_snake_index = data['board']['snakes'].index(data['you'])
+        next_index = (my_snake_index + 1) % len(data['board']['snakes'])
+        data['you'] = data['board']['snakes'][next_index]
+        self.draw_on_canvas(self.state_list[self.turn])
+
+
     def create_buttons(self):
         buttonFrame = Frame(master=self)
         buttonFrame.grid(row=0, column=1)
@@ -188,6 +197,9 @@ class Window(Tk):
         move_calculation = Button(master=buttonFrame, command=self.calculate_moves, text="Calculate moves")
         move_calculation.grid()
         self.bind("<c>", self.calculate_moves)
+        swap_you_snake = Button(master=buttonFrame, command=self.swap_you, text="Swap you")
+        swap_you_snake.grid()
+        self.bind("<s>", self.swap_you)
         return pause, fps_button
 
     def update_state_list(self):
@@ -301,6 +313,7 @@ class Window(Tk):
 
             if print_reachTime or print_future_duration:
                 tiles_others_reach_before_me, future_duration_map = brain.tiles_others_can_reach_before_me(data)
+                tiles_others_reach_before_me2, future_duration_map2 = brain2.tiles_others_can_reach_before_me(data)
                 for tile in tiles_others_reach_before_me:
                     head_offset = 5
                     x = tile['x']
@@ -308,6 +321,26 @@ class Window(Tk):
                     canvas.create_rectangle((x * block_size + head_offset, y * block_size + head_offset,
                                              (x + 1) * block_size - head_offset, (y + 1) * block_size - head_offset),
                                             fill='red')
+                for tile in tiles_others_reach_before_me2:
+                    head_offset = 6
+                    x = tile['x']
+                    y = tile['y']
+                    canvas.create_rectangle((x * block_size + head_offset, y * block_size + head_offset,
+                                             (x + 1) * block_size - head_offset, (y + 1) * block_size - head_offset),
+                                            fill='blue')
+                tiles_others_reach_before_me3, duration_map3 = \
+                    brain2.add_tiles_to_deadly_locations_where_i_would_be_stuck(
+                        data,
+                        brain2.get_deadly_locations(data) + tiles_others_reach_before_me2,
+                        future_duration_map2
+                    )
+                for tile in tiles_others_reach_before_me3:
+                    head_offset = 7
+                    x = tile['x']
+                    y = tile['y']
+                    canvas.create_rectangle((x * block_size + head_offset, y * block_size + head_offset,
+                                             (x + 1) * block_size - head_offset, (y + 1) * block_size - head_offset),
+                                            fill='green')
 
             if print_future_duration:
                 for x in range(width):
@@ -316,11 +349,15 @@ class Window(Tk):
                                            , text=future_duration_map[x][y])
 
             if print_reachTime:
-                reach_time_map = brain.create_map_with_reachtime(data, data['you'])
+                duration_map = brain.create_map_with_duration(data)
+                reach_time_map = brain2.create_map_with_reachtime(data, data['you'])
+                reach_time_map2 = brain2.create_map_with_reachtime(data, None, data['you'], duration_map)
                 for x in range(width):
                     for y in range(height):
-                        canvas.create_text((x * block_size + 10, y * block_size + 10)
+                        canvas.create_text((x * block_size + 5, y * block_size + 10)
                                            , text=reach_time_map[x][y])
+                        canvas.create_text((x * block_size + 15, y * block_size + 10)
+                                           , text=reach_time_map2[x][y])
 
             if print_escape_points:
                 deadly_locations_dic = brain.get_deadly_locations_dic(data)
