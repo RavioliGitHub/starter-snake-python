@@ -48,6 +48,7 @@ def start():
             initialize your snake state here using the
             request's data if necessary.
     """
+    print("starting")
     print(json.dumps(data))
 
     color = "#00FF00"
@@ -57,9 +58,9 @@ def start():
 
 @bottle.post('/move')
 def move():
-    #print("Received move request, unpacking data")
+    print("Received move request, unpacking data")
     data = bottle.request.json
-    #print("Received move request ", data['turn'])
+    print("Received move request ", data['turn'])
     my_move_response = get_move_response_string(data)
     return move_response(my_move_response)
 
@@ -79,8 +80,8 @@ def get_move_response_string(data):
 
     my_move_response2, move_score_list2 = response2
 
-    #print(time.time()-start_time)
-    #print("Responded to move request ", data['turn'], " with ", my_move_response2, move_score_list2)
+    print("response time", time.time()-start_time)
+    print("Responded to move request ", data['turn'], " with ", my_move_response2, move_score_list2)
     return my_move_response2
 
 
@@ -92,6 +93,7 @@ def end():
     TODO: If your snake AI was stateful,
         clean up any stateful objects here.
     """
+    print("end")
     print(json.dumps(data))
 
     return end_response()
