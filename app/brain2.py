@@ -755,7 +755,7 @@ def simple_best_move(data, time_limit):
     winning_moves = []
 
     max_depth = 0
-    time_limit = time_limit + 0.2
+    time_limit = time_limit + 0.15
     while available_moves:
         max_depth += 1
         log(data, "Reached depth " + str(max_depth))
