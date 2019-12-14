@@ -69,7 +69,7 @@ state_list = []
 def get_move_response_string(data):
     start_time = time.time()
 
-    timeFrame = 0.2
+    timeFrame = 0.15
     #print("remeber to reset timeframe before commting")
     #TODO RESET TIMEFRAME
     timeLimit = time.time() + timeFrame
