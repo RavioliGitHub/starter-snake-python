@@ -602,7 +602,7 @@ def find_way_out(data, start, deadly_locations, escape_points, escape_timings):
     if not check_if_space_is_escapable(data, start, escape_points, escape_timings):
         return "Cannot escape"
 
-    time_frame = 0.1
+    time_frame = 0.05
     time_end = time.time() + time_frame
     time_start = time.time()
     escape_path = breadth_first_saving_path_search(data, [start], escape_points, escape_timings, time_end)
@@ -755,6 +755,7 @@ def simple_best_move(data, time_limit):
     winning_moves = []
 
     max_depth = 0
+    time_limit = time_limit + 0.2
     while available_moves:
         max_depth += 1
         log(data, "Reached depth " + str(max_depth))
