@@ -536,8 +536,8 @@ def save_list_to_logs(list, file):
 
 
 def create_game(number_of_snakes):
-    HEIGHT = 11
-    WIDTH = 11
+    HEIGHT = 7
+    WIDTH = 7
     FOOD_AT_START = 0
     SNAKE_START_LENGTH = 3
     START_POSITIONS = [(1,1), (WIDTH-2, HEIGHT-2), (1, HEIGHT-2), (WIDTH-2, 1),

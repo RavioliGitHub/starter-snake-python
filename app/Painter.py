@@ -19,7 +19,7 @@ def log(turn, snake, message):
 def log(data, message):
     Logger().log(data['turn'], data['you'], message)
 
-block_size = 20
+block_size = 40
 
 
 print_duration = False
@@ -28,6 +28,7 @@ print_headDanger = False
 print_escape_points = False
 print_future_duration = False
 print_future_escape_points = False
+print_new_reach_map = True
 
 
 class Window(Tk):
@@ -41,7 +42,7 @@ class Window(Tk):
         self.pause = pause
         self.FPS = 60
         self.snake_color_by_id = self.create_snake_color_by_id(data)
-        self.canvas = Canvas(master=self, width=self.width * block_size * 2 + 700, height=self.height * block_size)
+        self.canvas = Canvas(master=self, width=self.width * block_size * 2 + 400, height=self.height * block_size)
         self.canvas.grid(row=0, column=0)
         self.textFrame = Frame(master=self, bg='orange', height=100)
         self.textFrame.grid()
@@ -383,6 +384,31 @@ class Window(Tk):
                                             fill='orange')
                     canvas.create_text((x * block_size + 10, y * block_size + 10)
                                        , text=str(timing))
+
+            if print_new_reach_map:
+                duration_map = brain2.create_map_with_duration(data)
+                new_map = brain2.create_map_with_reachtime_for_all_snakes(data, duration_map)
+                for x in range(width):
+                    for y in range(height):
+                        reach_time_data = new_map[x][y]
+                        snake = reach_time_data['snake']
+                        if not snake:
+                            color = 'black'
+                            reach_time = 'inf'
+                            duration = 'inf'
+                        else:
+                            color = self.snake_color_by_id[snake['id']]
+                            reach_time = reach_time_data['reach_time']
+                            duration = reach_time_data['duration']
+
+                        head_offset = 10
+                        canvas.create_rectangle((x * block_size + head_offset, y * block_size + head_offset,
+                                                 (x + 1) * block_size - head_offset,
+                                                 (y + 1) * block_size - head_offset),
+                                                fill=color)
+
+                        canvas.create_text((x * block_size + 20, y * block_size + 20)
+                                           , text=str(reach_time) + "," + str(duration))
 
     def update_text_lables(self, data):
         for snake in data['board']['snakes']:

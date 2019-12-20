@@ -5,6 +5,7 @@ from operator import itemgetter
 import Game_object_pool
 import game_engine
 import copy
+import settings
 
 try:
     from printer import Logger
@@ -60,6 +61,7 @@ Priotities:
 6) Find source of timeouts
 7) when 50/50 head  on head chooses path where other is less likely to go
 8) I can check if i can escape by reaching a thing before him, but that does not imply i do it
+9) have exactly 11*11 tiles items that get reused everywhere
 
 Starvation rule 
 You need a fixed thing for 8 snakes
@@ -480,6 +482,7 @@ def tiles_others_can_reach_before_me(data):
     list_of_tiles_others_reach_before_me = []
 
     normal_duration_map = create_map_with_duration(data)
+    # TODO is that deepcopy here really necessary ?
     duration_map_if_enemy_moves_to_tile = copy.deepcopy(normal_duration_map)
 
     for snake in data['board']['snakes']:
@@ -495,6 +498,91 @@ def tiles_others_can_reach_before_me(data):
                 duration_map_if_enemy_moves_to_tile[x][y] = enemy_duration
 
     return list_of_tiles_others_reach_before_me, duration_map_if_enemy_moves_to_tile
+
+
+def create_map_with_reachtime_for_all_snakes(data, duration_map):
+    start = time.time()
+    reach_tile_data = initialise_reachtime_data(data)
+
+    queue = []
+    next_queue = []
+    visited_in_current_iteration = []
+    previously_visited = []
+    deadly_locations = get_deadly_locations(data)
+
+    for snake in data['board']['snakes']:
+        head = snake['body'][0]
+        queue.append(head)
+
+    while queue:
+        cur = queue.pop(0)
+        visited_in_current_iteration.append(cur)
+        expand_node(data, cur, reach_tile_data, next_queue, duration_map, previously_visited, deadly_locations)
+
+        if not queue:
+            queue = next_queue
+            next_queue = []
+            previously_visited = previously_visited + visited_in_current_iteration
+            visited_in_current_iteration = []
+
+    #print("time", time.time()-start)
+    return reach_tile_data
+
+
+def initialise_reachtime_data(data):
+    reach_tile_data = []
+    for x in range(data['board']['width']):
+        reach_tile_data.append([])
+        for y in range(data['board']['height']):
+            reach_tile_data[x].append({'snake': None, 'reach_time': None, 'duration': None})
+
+    for snake in data['board']['snakes']:
+        head = snake['body'][0]
+        reach_tile_data[head['x']][head['y']]['snake'] = snake
+        reach_tile_data[head['x']][head['y']]['reach_time'] = 0
+        reach_tile_data[head['x']][head['y']]['duration'] = len(snake['body']) - 1
+
+    return reach_tile_data
+
+
+def expand_node(data, cur, reach_tile_data, next_queue, duration_map, previously_visited, deadly_locations):
+    for d in directions:
+        cur_neighbour = neighbour_tile(d, cur)
+
+        if on_board(cur_neighbour, data):
+            # if it is in previously visited, another snakes reaches it quicker
+            if cur_neighbour not in previously_visited:
+                cur_data_for_cur_tile = reach_tile_data[cur['x']][cur['y']]
+                cur_data_for_neighbour = reach_tile_data[cur_neighbour['x']][cur_neighbour['y']]
+
+                if this_snake_if_first_or_bigger(data, cur_data_for_cur_tile, cur_data_for_neighbour):
+                    if not_deadly_location_on_board(cur_neighbour, data, deadly_locations):
+                        set_reach_time_data_for_neighbour_tile(cur_data_for_neighbour, cur_data_for_cur_tile,
+                                                               next_queue, cur_neighbour)
+
+                    elif on_board(cur_neighbour, data):
+                        duration = duration_map[cur_neighbour['x']][cur_neighbour['y']]
+                        distance_to_head = cur_data_for_cur_tile['reach_time']
+                        if distance_to_head + 1 > duration:
+                            set_reach_time_data_for_neighbour_tile(cur_data_for_neighbour, cur_data_for_cur_tile,
+                                                                   next_queue, cur_neighbour)
+
+
+def this_snake_if_first_or_bigger(data, cur_data_for_cur_tile, cur_data_for_neighbour):
+    if not cur_data_for_neighbour['snake']:
+        return True
+    else:
+        # Maybe add a thing where your snake considers tiles it can reach at the same time as others as not good
+        return len(cur_data_for_cur_tile['snake']['body']) > len(cur_data_for_neighbour['snake']['body'])
+
+
+def set_reach_time_data_for_neighbour_tile(cur_data_for_neighbour, cur_data_for_cur_tile, next_queue, cur_neighbour):
+    cur_data_for_neighbour['snake'] = cur_data_for_cur_tile['snake']
+    cur_data_for_neighbour['reach_time'] = cur_data_for_cur_tile['reach_time'] + 1
+    cur_data_for_neighbour['duration'] = cur_data_for_cur_tile['duration'] + 1
+
+    if cur_neighbour not in next_queue:
+        next_queue.append(cur_neighbour)
 
 
 def i_reach_tile_first(tile, snake_map_dic, data):
@@ -526,6 +614,7 @@ def check_if_space_is_escapable(data, head, escape_points, escape_timings):
 
 
 def get_directions_that_are_escapable(data, directions_without_direct_death):
+    # Checks which directions are escapable assuming enemy snakes don't move
     # TODO mostly fails when food is involved
     # Eg, i could escape on a path if the snakes ate no food
     sure_death = []
@@ -548,10 +637,6 @@ def get_directions_that_are_escapable(data, directions_without_direct_death):
         else:
             # either can reach tail or a path
             sure_life.append(direction)
-
-    log(data, ("sure_death= " + str(sure_death)))
-    log(data, ("sure_life= " + str(sure_life)))
-    log(data, ("unknown= " + str(unknown_survival)))
 
     return {'sure_death': sure_death, 'sure_life': sure_life, 'unknown_survival': unknown_survival}
 
@@ -602,6 +687,8 @@ def find_way_out(data, start, deadly_locations, escape_points, escape_timings):
     if not check_if_space_is_escapable(data, start, escape_points, escape_timings):
         return "Cannot escape"
 
+    # TODO make sure min max simple always has 0.2 seconds
+    # TODO eventually problems here
     time_frame = 0.1
     time_end = time.time() + time_frame
     time_start = time.time()
@@ -747,7 +834,7 @@ def simple_min_value(position, depth, my_move, time_limit):
     return min(child_scores)
 
 
-def simple_best_move(data, time_limit):
+def simple_best_move(data, time_limit, depth_limit):
     global state_count
     state_count = 0
     available_moves = ['up', 'down', 'left', 'right']
@@ -755,7 +842,7 @@ def simple_best_move(data, time_limit):
     winning_moves = []
 
     max_depth = 0
-    while available_moves:
+    while available_moves and time.time() < time_limit and max_depth < depth_limit:
         max_depth += 1
         log(data, "Reached depth " + str(max_depth))
 
@@ -772,9 +859,208 @@ def simple_best_move(data, time_limit):
             elif simple_score == 0.5:
                 pass
             else:
+                #assert simple_score == "cancel"
+                #TODO remove before tournament
+                break
+
+    log(data, "statecount " + str(state_count))
+    return deadly_moves, winning_moves, available_moves
+
+
+alpha_beta_state_count = 0
+def alpha_beta_best_move(data, time_limit, depth_limit):
+    global alpha_beta_state_count
+    alpha_beta_state_count = 0
+    available_moves = ['up', 'down', 'left', 'right']
+    deadly_moves = []
+    winning_moves = []
+
+    max_depth = 0
+    while available_moves and time.time() < time_limit and max_depth < depth_limit and not winning_moves:
+        max_depth += 1
+        log(data, "Reached depth " + str(max_depth))
+
+        # Error if deleting from list while iterating
+        loop_moves = copy.deepcopy(available_moves)
+        for move in loop_moves:
+            simple_score = simple_alphabeta(data, max_depth, -1, 10, move, time_limit)
+            if simple_score == 0:
+                available_moves.remove(move)
+                deadly_moves.append(move)
+            elif simple_score == 1:
+                available_moves.remove(move)
+                winning_moves.append(move)
+            elif simple_score == 0.5:
+                pass
+            else:
+                #assert simple_score == "cancel"
+                #TODO remove before tournament
+                break
+
+    log(data, "statecount alpha beta" + str(alpha_beta_state_count))
+    return deadly_moves, winning_moves, available_moves
+
+
+def simple_alphabeta(data, depth, alpha, beta, my_move, time_limit):
+    global alpha_beta_state_count
+    if im_dead(data) or not get_moves_without_direct_death(data):
+        return 0
+    elif len(data['board']['snakes']) == 1:
+        return 1
+    if depth == 0:
+        alpha_beta_state_count += 1
+        return simple_evaluation(data)
+
+    # maximising
+    if my_move is None:
+        ab_max_value = -1
+
+        for move in get_moves_without_direct_death(data):
+            if time.time() > time_limit:
+                return "cancel"
+            max_child_value = simple_alphabeta(data, depth, alpha, beta, move, time_limit)
+            if type(max_child_value) == str:
+                return "cancel"
+
+            ab_max_value = max(ab_max_value, max_child_value)
+            alpha = max(alpha, ab_max_value)
+
+            if alpha >= beta:
+                break  # beta cut-off
+        return ab_max_value
+
+    else:
+        ab_min_value = 10
+        for move_combination in get_possible_moves_for_all_snakes(data, my_move):
+            if time.time() > time_limit:
+                return "cancel"
+
+            updated_position = game_engine.pool_update(data, move_combination)
+            min_child_value = simple_alphabeta(updated_position, depth - 1, alpha, beta, None, time_limit)
+            Game_object_pool.GamePool().return_object(updated_position)
+
+            if type(min_child_value) == str:
+                return "cancel"
+
+            ab_min_value = min(ab_min_value, min_child_value)
+            beta = min(beta, ab_min_value)
+
+            if alpha >= beta:
+                break  # alpha cut-off
+        return ab_min_value
+
+
+state_count2 = 0
+
+
+def evaluation(data):
+    global state_count2
+    state_count2 += 1
+    if im_dead(data):
+        return 0
+    if len(data['board']['snakes']) == 1:
+        return 1
+    moves_without_direct_death = get_moves_without_direct_death(data)
+    if not moves_without_direct_death:
+        return 0
+    moves_without_potential_deadly_head_on_head_collision = \
+        get_moves_without_potential_deadly_head_on_head_collision(data, moves_without_direct_death)
+    if not moves_without_potential_deadly_head_on_head_collision:
+        return 0
+    future_escape = get_directions_that_are_escapable_future(data, moves_without_direct_death,
+                                                             moves_without_potential_deadly_head_on_head_collision)
+    if not future_escape['sure_life'] and not future_escape['unknown_survival']:
+        return 0
+
+    else:
+        return 0.5
+
+
+def my_evaluation(data):
+    my_snake = data['you']
+    my_score = evaluation(data)
+    if my_score == 0 or my_score == 1:
+        return my_score
+
+    enemy_scores = []
+    for snake in data['board']['snakes']:
+        if snake == data['you']:
+            continue
+
+        data['you'] = snake
+        score = evaluation(data)
+        enemy_scores.append(score)
+
+    data['you'] = my_snake
+
+    if max(enemy_scores) == 0:
+        return 1
+
+    return 0.5
+
+
+def max_value(data, depth, time_limit):
+    if im_dead(data) or not get_moves_without_direct_death(data):
+        return 0
+    elif len(data['board']['snakes']) == 1:
+        return 1
+    if depth == 0:
+        return evaluation(data)
+    else:
+        child_scores = []
+        for move in get_moves_without_direct_death(data):
+            if time.time() > time_limit:
+                return "cancel"
+            child_scores.append(min_value(data, depth, move, time_limit))
+        return max(child_scores)
+
+
+def min_value(position, depth, my_move, time_limit):
+    child_scores = []
+    for move_combination in get_possible_moves_for_all_snakes(position, my_move):
+        if time.time() > time_limit:
+            return "cancel"
+
+        updated_position = game_engine.pool_update(position, move_combination)
+        child_scores.append(max_value(updated_position, depth - 1, time_limit))
+        Game_object_pool.GamePool().return_object(updated_position)
+
+    return min(child_scores)
+
+
+def best_move(data, time_limit):
+    global state_count2
+    state_count2 = 0
+    available_moves = ['up', 'down', 'left', 'right']
+    deadly_moves = []
+    winning_moves = []
+
+    max_depth = 0
+    while available_moves and time.time() < time_limit:
+        max_depth += 1
+        log(data, "Reached depth " + str(max_depth))
+
+        # Error if deleting from list while iterating
+        loop_moves = copy.deepcopy(available_moves)
+        for move in loop_moves:
+            simple_score = min_value(data, max_depth, move, time_limit)
+            if simple_score == 0:
+                available_moves.remove(move)
+                deadly_moves.append(move)
+            elif simple_score == 1:
+                available_moves.remove(move)
+                winning_moves.append(move)
+            elif simple_score == 0.5:
+                pass
+            else:
                 assert simple_score == "cancel"
                 #TODO remove before tournament
-                return deadly_moves, winning_moves, available_moves
+                break
+
+    log(data, "deadly_moves2" + str(deadly_moves))
+    log(data, "winning_moves2" + str(winning_moves))
+    log(data, "available_moves2" + str(available_moves))
+    log(data, "Statecount " + str(state_count2))
     return deadly_moves, winning_moves, available_moves
 
 
@@ -792,7 +1078,7 @@ def add_tiles_to_deadly_locations_where_i_would_be_stuck(data, deadly_locations,
                     if not on_board(neighbour, data):
                         continue
                     elif neighbour == data['you']['body'][0]:
-                        #TODO might create problems in future, fix
+                        # TODO might create problems in future, fix
                         safe_neighbour_count += 1
                     elif neighbour in deadly_locations:
                         neighbour_durations.append(duration_map_if_enemy_moves_to_tile[neighbour['x']][neighbour['y']])
@@ -853,22 +1139,79 @@ def get_directions_that_are_escapable_future(
         else:
             # either can reach tail or a path
             sure_life.append(direction)
-        # print("2.)", data['turn'], data['you']['name'], direction, escape)
-
-    log(data, ("sure_death_future2= " + str(sure_death)))
-    log(data, ("sure_life_future2= " + str(sure_life)))
-    log(data, ("unknown_future2= " + str(unknown_survival)))
 
     return {'sure_death': sure_death, 'sure_life': sure_life, 'unknown_survival': unknown_survival}
 
 
-def get_best_move_based_on_current_data(data, time_limit):
+# FUTURE ESCAPE
+def get_directions_that_are_escapable_future2(
+        data,
+        directions_without_direct_death,
+        directions_without_potential_head_on_head_collision):
+    # TODO mostly fails when food is involved
+    # Eg, i could escape on a path if the snakes ate no food
+    sure_death = []
+    sure_life = []
+    unknown_survival = []
+
+    duration_map = create_map_with_duration(data)
+    reach_time_data = create_map_with_reachtime_for_all_snakes(data, duration_map)
+
+    deadly_locations = get_deadly_locations(data)
+
+    duration_map_if_enemy_moves_to_tile = []
+    for x in range(data['board']['width']):
+        duration_map_if_enemy_moves_to_tile.append([])
+        for y in range(data['board']['height']):
+            duration_map_if_enemy_moves_to_tile[x].append('inf')
+            snake = reach_time_data[x][y]['snake']
+            if snake:
+                duration_map_if_enemy_moves_to_tile[x][y] = reach_time_data[x][y]['duration']
+                if snake != data['you']:
+                    tile = {'x': x, 'y': y}
+                    if tile not in deadly_locations:
+                        deadly_locations.append(tile)
+
+    deadly_locations, duration_map_if_enemy_moves_to_tile = \
+        add_tiles_to_deadly_locations_where_i_would_be_stuck(
+            data, deadly_locations, duration_map_if_enemy_moves_to_tile)
+
+    for direction in directions_without_direct_death:
+        if direction in directions_without_potential_head_on_head_collision:
+            new_head = neighbour_tile(direction, data['you']['body'][0])
+
+            if new_head in deadly_locations:
+                escape = "deadly start"
+            else:
+                escape_points, escape_timings = \
+                    get_escape_points(data, new_head, deadly_locations, duration_map_if_enemy_moves_to_tile)
+                escape = find_way_out(data, new_head, deadly_locations, escape_points, escape_timings)
+
+        else:
+            escape = "Potential head on head"
+
+        if escape == "Cannot escape" or \
+                escape is None or \
+                escape == "Potential head on head" or \
+                escape == "deadly start":
+            sure_death.append(direction)
+        elif escape == "Time limit":
+            unknown_survival.append(direction)
+        else:
+            # either can reach tail or a path
+            sure_life.append(direction)
+
+    return {'sure_death': sure_death, 'sure_life': sure_life, 'unknown_survival': unknown_survival}
+
+
+def get_best_move_based_on_current_data(data):
     log(data, "##### GET BEST MOVE #####")
+
+    start_time = time.time()
+    time_limit = start_time + settings.BASE_TIME
 
     directions_without_direct_death = get_moves_without_direct_death(data)
     log(data, "directions_without_direct_death: " + str(directions_without_direct_death))
-
-    escapabilty_dic = get_directions_that_are_escapable(data, directions_without_direct_death)
 
     if not directions_without_direct_death:
         log(data, "No directions without death, so we go up")
@@ -883,10 +1226,19 @@ def get_best_move_based_on_current_data(data, time_limit):
     log(data, "directions_without_potential_deadly_head_on_head_collision: " +
         str(directions_without_potential_deadly_head_on_head_collision))
 
+    escapabilty_dic = get_directions_that_are_escapable(data, directions_without_direct_death)
+    log(data, ("sure_death= " + str(escapabilty_dic['sure_death'])))
+    log(data, ("sure_life= " + str(escapabilty_dic['sure_life'])))
+    log(data, ("unknown= " + str(escapabilty_dic['unknown_survival'])))
+
     future_escapabilty_dic = get_directions_that_are_escapable_future(
         data,
         directions_without_direct_death,
         directions_without_potential_deadly_head_on_head_collision)
+
+    log(data, ("sure_death_future= " + str(future_escapabilty_dic['sure_death'])))
+    log(data, ("sure_life_future= " + str(future_escapabilty_dic['sure_life'])))
+    log(data, ("unknown_future= " + str(future_escapabilty_dic['unknown_survival'])))
 
     directions_without_potential_head_on_head_with_longer_snakes = \
         get_moves_without_potential_deadly_head_on_head_collision_with_longer_snakes(
@@ -907,14 +1259,6 @@ def get_best_move_based_on_current_data(data, time_limit):
         directions_that_lead_to_head_lockdown_min_max = []
     log(data, "directions_that_lead_to_head_lockdown_min_max: " + str(directions_that_lead_to_head_lockdown_min_max))
 
-    for d in directions_that_lead_to_head_lockdown_min_max:
-        if d not in future_escapabilty_dic['sure_death']:
-            print("Lockdown escapable", "turn", data['turn'], "snake", data['you']['name'])
-        if d not in future_escapabilty_dic['sure_death']:
-            print("Lockdown escapable2", "turn", data['turn'], "snake", data['you']['name'])
-
-
-
     closest_apple = get_food_im_closest_to(data)
     log(data, "closest_apple: " + str(closest_apple))
 
@@ -924,8 +1268,13 @@ def get_best_move_based_on_current_data(data, time_limit):
     directions_with_tails = get_moves_that_directly_lead_to_tails(data)
     log(data, "directions_with_tails: " + str(directions_with_tails))
 
-    deadly_moves, winning_moves, available_moves = simple_best_move(data, time_limit)
-    #print(state_count)
+    deadly_moves2, winning_moves2, available_moves2 = \
+        best_move(data, time.time() + settings.TIME_FOR_EXPANDED_MINIMAX)
+
+    deadly_moves, winning_moves, available_moves = \
+        alpha_beta_best_move(data, start_time + settings.TOTAL_TIME,
+                             settings.SIMPLE_ALPHA_BETA_DEPTH_LIMIT)
+
     log(data, 'deadly_moves ' + str(deadly_moves))
     log(data, 'winning_moves ' + str(winning_moves))
     log(data, 'available_moves ' + str(available_moves))
@@ -975,3 +1324,34 @@ def get_best_move_based_on_current_data(data, time_limit):
     log(data, 'move_score_list' + str(move_score_list))
     log(data, 'equivalent_best_moves' + str(equivalent_best_moves))
     return random.choice(equivalent_best_moves), move_score_list
+
+
+def test_alpha_beta(data):
+    for depth in range(5):
+
+        # TODO aspiration window
+
+        ab_start_time = time.time()
+        alpha_beta_results = alpha_beta_best_move(data, time.time() + 10000000, depth)
+        ab_time = time.time() - ab_start_time
+
+        min_max_start_time = time.time()
+        min_max_results = simple_best_move(data, time.time() + 100000000, depth)
+        min_max_time = time.time() - min_max_start_time
+
+        print("Turn", data["turn"])
+
+        ab_time_per_state = "N/A"
+        if alpha_beta_state_count != 0:
+            ab_time_per_state = ab_time / alpha_beta_state_count
+
+        min_max_time_per_state = "N/A"
+        if state_count != 0:
+            min_max_time_per_state = min_max_time / state_count
+
+        print("alpha-beta", alpha_beta_state_count, ab_time, ab_time_per_state, alpha_beta_results)
+        print("min-max   ", state_count, min_max_time, min_max_time_per_state, min_max_results)
+
+        assert alpha_beta_results == min_max_results
+        assert alpha_beta_state_count <= state_count
+

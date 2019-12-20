@@ -1,14 +1,14 @@
 import json
 import os
-import random
 import bottle
-import brain
 import brain2
 import time
 import sys
 import Game_object_pool
 from api import ping_response, start_response, move_response, end_response
-import game_engine
+
+# TODO turn back to true before commit
+main_print = True
 
 
 @bottle.route('/')
@@ -58,9 +58,11 @@ def start():
 
 @bottle.post('/move')
 def move():
-    print("Received move request, unpacking data")
+    if main_print:
+        print("Received move request, unpacking data")
     data = bottle.request.json
-    print("Received move request ", data['turn'])
+    if main_print:
+        print("Received move request ", data['turn'])
     my_move_response = get_move_response_string(data)
     return move_response(my_move_response)
 
@@ -69,19 +71,16 @@ state_list = []
 def get_move_response_string(data):
     start_time = time.time()
 
-    timeFrame = 0.2
-    #print("remeber to reset timeframe before commting")
-    #TODO RESET TIMEFRAME
-    timeLimit = time.time() + timeFrame
-    response2 = brain2.get_best_move_based_on_current_data(data, timeLimit)
+    response2 = brain2.get_best_move_based_on_current_data(data)
 
     if type(response2) == str:
         response2 = (response2, [])
 
     my_move_response2, move_score_list2 = response2
 
-    print("response time", time.time()-start_time)
-    print("Responded to move request ", data['turn'], " with ", my_move_response2, move_score_list2)
+    if main_print:
+        print("response time", time.time()-start_time, "name", data['you']['name'])
+        print("Responded to move request ", data['turn'], " with ", my_move_response2, move_score_list2)
     return my_move_response2
 
 

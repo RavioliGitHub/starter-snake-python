@@ -18,7 +18,7 @@ for el, color in zip(elements, colors):
 class Window(Tk):
     def __init__(self, state_queue):
         Tk.__init__(self, className="MyCreatorWindow")
-        self.canvas = Canvas(master=self, width=10 * block_size * 2 + 500, height=10 * block_size)
+        self.canvas = Canvas(master=self, width=11 * block_size * 2 + 500, height=11 * block_size)
         self.canvas.pack()
         self.Frame = Frame(self)
         self.element_to_add = elements[0]
