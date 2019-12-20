@@ -311,19 +311,16 @@ def get_moves_that_directly_lead_to_food(data):
     return moves_that_directly_lead_to_food
 
 
-def get_moves_that_directly_lead_to_tails(data):
+def get_moves_that_directly_lead_to_your_tail(data):
 
     you = data['you']
     you_head = you['body'][0]
-
-    tails = []
-    for snake in data['board']['snakes']:
-        tails.append(snake['body'][-1])
+    you_tail = you['body'][-1]
 
     moves_that_directly_lead_to_tails = []
     for d in directions:
         next_tile = neighbour_tile(d, you_head)
-        if next_tile in tails:
+        if next_tile == you_tail:
             moves_that_directly_lead_to_tails.append(d)
 
     return moves_that_directly_lead_to_tails
@@ -1268,8 +1265,8 @@ def get_best_move_based_on_current_data(data):
     distances_to_closest_apple = get_distance_to_apple_if_move_is_made(data, closest_apple)
     log(data, "distances_to_closest_apple: " + str(distances_to_closest_apple))
 
-    directions_with_tails = get_moves_that_directly_lead_to_tails(data)
-    log(data, "directions_with_tails: " + str(directions_with_tails))
+    directions_with_my_tail = get_moves_that_directly_lead_to_your_tail(data)
+    log(data, "directions_with_my_tail: " + str(directions_with_my_tail))
 
     deadly_moves, winning_moves, available_moves = \
         alpha_beta_best_move(data, start_time + settings.TOTAL_TIME,
@@ -1307,7 +1304,7 @@ def get_best_move_based_on_current_data(data):
             score += 10000 - distance_to_apple*500
         if True:  # distance to center points
             score += 1000 - distance_to_center*20  # needs to always be bigger than 0
-        if d in directions_with_tails:
+        if d in directions_with_my_tail:
             score += 100
         if d in directions_with_food:
             score += 10
