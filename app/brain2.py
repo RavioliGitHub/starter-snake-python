@@ -613,7 +613,7 @@ def check_if_space_is_escapable(data, head, escape_points, escape_timings):
     return min(escape_timings) <= number_of_tiles
 
 
-def get_directions_that_are_escapable(data, directions_without_direct_death):
+def get_directions_that_are_escapable(data, directions_without_direct_death, time_limit):
     # Checks which directions are escapable assuming enemy snakes don't move
     # TODO mostly fails when food is involved
     # Eg, i could escape on a path if the snakes ate no food
@@ -628,7 +628,7 @@ def get_directions_that_are_escapable(data, directions_without_direct_death):
         duration_map = create_map_with_duration(data)
         escape_points, escape_timings = get_escape_points(data, new_head, deadly_locations_dic, duration_map)
 
-        escape = find_way_out(data, new_head, deadly_locations, escape_points, escape_timings)
+        escape = find_way_out(data, new_head, deadly_locations, escape_points, escape_timings, time_limit)
 
         if escape == "Cannot escape" or escape is None:
             sure_death.append(direction)
@@ -679,7 +679,7 @@ def i_can_reach_a_tail(data, start, deadly_locations):
     return False
 
 
-def find_way_out(data, start, deadly_locations, escape_points, escape_timings):
+def find_way_out(data, start, deadly_locations, escape_points, escape_timings, time_limit):
 
     if i_can_reach_a_tail(data, start, deadly_locations):
         return "Can reach a tail"
@@ -689,13 +689,12 @@ def find_way_out(data, start, deadly_locations, escape_points, escape_timings):
 
     # TODO make sure min max simple always has 0.2 seconds
     # TODO eventually problems here
-    time_frame = 0.1
-    time_end = time.time() + time_frame
-    time_start = time.time()
+    time_frame = 0.05
+    time_end = min(time.time() + time_frame, time_limit)
     escape_path = breadth_first_saving_path_search(data, [start], escape_points, escape_timings, time_end)
 
     # Cancelled because time
-    if time.time() - time_start > time_frame:
+    if time.time() > time_end:
         if not escape_path:
             escape_path = "Time limit"
 
@@ -968,7 +967,8 @@ def evaluation(data):
     if not moves_without_potential_deadly_head_on_head_collision:
         return 0
     future_escape = get_directions_that_are_escapable_future(data, moves_without_direct_death,
-                                                             moves_without_potential_deadly_head_on_head_collision)
+                                                             moves_without_potential_deadly_head_on_head_collision,
+                                                             )
     if not future_escape['sure_life'] and not future_escape['unknown_survival']:
         return 0
 
@@ -1096,7 +1096,8 @@ def add_tiles_to_deadly_locations_where_i_would_be_stuck(data, deadly_locations,
 def get_directions_that_are_escapable_future(
         data,
         directions_without_direct_death,
-        directions_without_potential_head_on_head_collision):
+        directions_without_potential_head_on_head_collision,
+        time_limit):
     # TODO mostly fails when food is involved
     # Eg, i could escape on a path if the snakes ate no food
     sure_death = []
@@ -1124,7 +1125,7 @@ def get_directions_that_are_escapable_future(
             else:
                 escape_points, escape_timings = \
                     get_escape_points(data, new_head, deadly_locations, duration_map_if_enemy_moves_to_tile)
-                escape = find_way_out(data, new_head, deadly_locations, escape_points, escape_timings)
+                escape = find_way_out(data, new_head, deadly_locations, escape_points, escape_timings, time_limit)
 
         else:
             escape = "Potential head on head"
@@ -1147,7 +1148,8 @@ def get_directions_that_are_escapable_future(
 def get_directions_that_are_escapable_future2(
         data,
         directions_without_direct_death,
-        directions_without_potential_head_on_head_collision):
+        directions_without_potential_head_on_head_collision,
+        time_limit):
     # TODO mostly fails when food is involved
     # Eg, i could escape on a path if the snakes ate no food
     sure_death = []
@@ -1185,7 +1187,7 @@ def get_directions_that_are_escapable_future2(
             else:
                 escape_points, escape_timings = \
                     get_escape_points(data, new_head, deadly_locations, duration_map_if_enemy_moves_to_tile)
-                escape = find_way_out(data, new_head, deadly_locations, escape_points, escape_timings)
+                escape = find_way_out(data, new_head, deadly_locations, escape_points, escape_timings, time_limit)
 
         else:
             escape = "Potential head on head"
@@ -1226,7 +1228,7 @@ def get_best_move_based_on_current_data(data):
     log(data, "directions_without_potential_deadly_head_on_head_collision: " +
         str(directions_without_potential_deadly_head_on_head_collision))
 
-    escapabilty_dic = get_directions_that_are_escapable(data, directions_without_direct_death)
+    escapabilty_dic = get_directions_that_are_escapable(data, directions_without_direct_death, time_limit)
     log(data, ("sure_death= " + str(escapabilty_dic['sure_death'])))
     log(data, ("sure_life= " + str(escapabilty_dic['sure_life'])))
     log(data, ("unknown= " + str(escapabilty_dic['unknown_survival'])))
@@ -1234,7 +1236,8 @@ def get_best_move_based_on_current_data(data):
     future_escapabilty_dic = get_directions_that_are_escapable_future(
         data,
         directions_without_direct_death,
-        directions_without_potential_deadly_head_on_head_collision)
+        directions_without_potential_deadly_head_on_head_collision,
+        time_limit)
 
     log(data, ("sure_death_future= " + str(future_escapabilty_dic['sure_death'])))
     log(data, ("sure_life_future= " + str(future_escapabilty_dic['sure_life'])))
@@ -1267,9 +1270,6 @@ def get_best_move_based_on_current_data(data):
 
     directions_with_tails = get_moves_that_directly_lead_to_tails(data)
     log(data, "directions_with_tails: " + str(directions_with_tails))
-
-    deadly_moves2, winning_moves2, available_moves2 = \
-        best_move(data, time.time() + settings.TIME_FOR_EXPANDED_MINIMAX)
 
     deadly_moves, winning_moves, available_moves = \
         alpha_beta_best_move(data, start_time + settings.TOTAL_TIME,
