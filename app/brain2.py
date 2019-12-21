@@ -814,8 +814,6 @@ def killer_evaluation(data):
         return 1
     else:
         score = round(1 - (len(data['board']['snakes'])/10.0) + 0.1, 3)
-        assert score < 1, str(len(data['board']['snakes'])/10.0)
-        assert score > 0
         return score
 
 
@@ -1435,41 +1433,44 @@ def get_best_move_based_on_current_data(data):
 def test_alpha_beta(data):
     for depth in range(9):
 
+        min_max = False
+        alpha_beta = False
+        killer = False
         # TODO aspiration window
         print("Turn", data["turn"], "depth", depth)
 
-        ab_start_time = time.time()
-        alpha_beta_results = alpha_beta_best_move(data, time.time() + 10000000, depth)
-        ab_time = round(time.time() - ab_start_time, 5)
+        if min_max:
+            min_max_start_time = time.time()
+            min_max_results = simple_best_move(data, time.time() + 100000000, depth)
+            min_max_time = round(time.time() - min_max_start_time, 5)
 
-        killer_start_time = time.time()
-        killer_results = killer_best_move(data, time.time() + 10000000, depth)
-        killer_time = round(time.time() - killer_start_time, 5)
+            min_max_time_per_state = "N/A"
+            if state_count != 0:
+                min_max_time_per_state = min_max_time / state_count
 
-        min_max_start_time = time.time()
-        min_max_results = simple_best_move(data, time.time() + 100000000, depth)
-        min_max_time = round(time.time() - min_max_start_time, 5)
+            print("min-max   ", state_count, min_max_time, min_max_time_per_state, min_max_results)
 
-        ab_time_per_state = "N/A"
-        if alpha_beta_state_count != 0:
-            ab_time_per_state = round(ab_time / alpha_beta_state_count, 5)
+        if alpha_beta:
+            ab_start_time = time.time()
+            alpha_beta_results = alpha_beta_best_move(data, time.time() + 10000000, depth)
+            ab_time = round(time.time() - ab_start_time, 5)
 
-        killer_time_per_state = "N/A"
-        if kill_state_count != 0:
-            killer_time_per_state = round(killer_time / kill_state_count, 5)
+            ab_time_per_state = "N/A"
+            if alpha_beta_state_count != 0:
+                ab_time_per_state = round(ab_time / alpha_beta_state_count, 5)
 
-        min_max_time_per_state = "N/A"
-        if state_count != 0:
-            min_max_time_per_state = min_max_time / state_count
+            print("alpha-beta", alpha_beta_state_count, ab_time, ab_time_per_state, alpha_beta_results)
 
-        print("alpha-beta", alpha_beta_state_count, ab_time, ab_time_per_state, alpha_beta_results)
-        print("killer    ", kill_state_count, killer_time, killer_time_per_state, killer_results[3], killer_results[:3])
-        print("min-max   ", state_count, min_max_time, min_max_time_per_state, min_max_results)
+        if killer:
+            killer_start_time = time.time()
+            killer_results = killer_best_move(data, time.time() + 10000000, depth)
+            killer_time = round(time.time() - killer_start_time, 5)
 
-        for i in range(3):
-            assert alpha_beta_results[i] == killer_results[i]
+            killer_time_per_state = "N/A"
+            if kill_state_count != 0:
+                killer_time_per_state = round(killer_time / kill_state_count, 5)
 
-        assert alpha_beta_results == min_max_results
-        assert alpha_beta_state_count <= state_count
+            print("killer    ", kill_state_count, killer_time, killer_time_per_state, killer_results[3], killer_results[:3])
+
 
 
