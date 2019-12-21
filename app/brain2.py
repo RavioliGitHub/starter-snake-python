@@ -62,6 +62,9 @@ Priotities:
 7) when 50/50 head  on head chooses path where other is less likely to go
 8) I can check if i can escape by reaching a thing before him, but that does not imply i do it
 9) have exactly 11*11 tiles items that get reused everywhere
+10) Aspiration window and killer moves ?
+11) Have kill on alpha beta
+12) Use the simple estimates of death
 
 Starvation rule 
 You need a fixed thing for 8 snakes
@@ -800,6 +803,22 @@ def simple_evaluation(data):
     else:
         return 0.5
 
+
+kill_state_count = 0
+def killer_evaluation(data):
+    global kill_state_count
+    kill_state_count += 1
+    if im_dead(data):
+        return 0
+    elif len(data['board']['snakes']) == 1:
+        return 1
+    else:
+        score = round(1 - (len(data['board']['snakes'])/10.0) + 0.1, 3)
+        assert score < 1, str(len(data['board']['snakes'])/10.0)
+        assert score > 0
+        return score
+
+
 state_count = 0
 def simple_max_value(data, depth, time_limit):
     if im_dead(data) or not get_moves_without_direct_death(data):
@@ -946,9 +965,89 @@ def simple_alphabeta(data, depth, alpha, beta, my_move, time_limit):
         return ab_min_value
 
 
+def killer_best_move(data, time_limit, depth_limit):
+    log(data, "Starting killer alpha beta")
+    global kill_state_count
+    kill_state_count = 0
+    available_moves = ['up', 'down', 'left', 'right']
+    deadly_moves = []
+    winning_moves = []
+    move_scores = {'up': 0, 'down': 0, 'left': 0, 'right': 0}
+
+    max_depth = 0
+    while available_moves and time.time() < time_limit and max_depth < depth_limit and not winning_moves:
+        max_depth += 1
+        log(data, "Reached depth " + str(max_depth))
+
+        # Error if deleting from list while iterating
+        loop_moves = copy.deepcopy(available_moves)
+        for move in loop_moves:
+            killer_score = killer_alphabeta(data, max_depth, -1, 10, move, time_limit)
+
+            if type(killer_score) == str:  # This means ab was cancelled for time reasons
+                break
+            else:
+                move_scores[move] = killer_score
+
+            if killer_score == 0:
+                available_moves.remove(move)
+                deadly_moves.append(move)
+            elif killer_score == 1:
+                available_moves.remove(move)
+                winning_moves.append(move)
+
+    log(data, "statecount killer alpha beta" + str(kill_state_count))
+    return deadly_moves, winning_moves, available_moves, move_scores
+
+
+def killer_alphabeta(data, depth, alpha, beta, my_move, time_limit):
+    if im_dead(data) or not get_moves_without_direct_death(data):
+        return 0
+    elif len(data['board']['snakes']) == 1:
+        return 1
+    if depth == 0:
+        return killer_evaluation(data)
+
+    # maximising
+    if my_move is None:
+        ab_max_value = -1
+
+        for move in get_moves_without_direct_death(data):
+            if time.time() > time_limit:
+                return "cancel"
+            max_child_value = killer_alphabeta(data, depth, alpha, beta, move, time_limit)
+            if type(max_child_value) == str:
+                return "cancel"
+
+            ab_max_value = max(ab_max_value, max_child_value)
+            alpha = max(alpha, ab_max_value)
+
+            if alpha >= beta:
+                break  # beta cut-off
+        return ab_max_value
+
+    else:
+        ab_min_value = 10
+        for move_combination in get_possible_moves_for_all_snakes(data, my_move):
+            if time.time() > time_limit:
+                return "cancel"
+
+            updated_position = game_engine.pool_update(data, move_combination)
+            min_child_value = killer_alphabeta(updated_position, depth - 1, alpha, beta, None, time_limit)
+            Game_object_pool.GamePool().return_object(updated_position)
+
+            if type(min_child_value) == str:
+                return "cancel"
+
+            ab_min_value = min(ab_min_value, min_child_value)
+            beta = min(beta, ab_min_value)
+
+            if alpha >= beta:
+                break  # alpha cut-off
+        return ab_min_value
+
+
 state_count2 = 0
-
-
 def evaluation(data):
     global state_count2
     state_count2 += 1
@@ -1268,38 +1367,48 @@ def get_best_move_based_on_current_data(data):
     directions_with_my_tail = get_moves_that_directly_lead_to_your_tail(data)
     log(data, "directions_with_my_tail: " + str(directions_with_my_tail))
 
-    deadly_moves, winning_moves, available_moves = \
-        alpha_beta_best_move(data, start_time + settings.TOTAL_TIME,
-                             settings.SIMPLE_ALPHA_BETA_DEPTH_LIMIT)
+    deadly_moves, winning_moves, available_moves, killer_scores = \
+        killer_best_move(data, start_time + settings.TOTAL_TIME,
+                         settings.SIMPLE_ALPHA_BETA_DEPTH_LIMIT)
 
     log(data, 'deadly_moves ' + str(deadly_moves))
     log(data, 'winning_moves ' + str(winning_moves))
     log(data, 'available_moves ' + str(available_moves))
+    log(data, 'killer scores ' + str(killer_scores))
 
     move_score_list = []
     points = [0, 0, 0, 0]
     for d, score, distance_to_center, distance_to_apple in \
             zip(directions, points, distances_to_center, distances_to_closest_apple):
         if d in directions_without_direct_death:
-            score += 100000000000000
+            score += 10000000000000000
         if d in winning_moves:
-            score += 10000000000000
+            score += 1000000000000000
         if d not in deadly_moves:
-            score += 1000000000000
+            score += 100000000000000
         if d in directions_without_potential_head_on_head_with_longer_snakes:
-            score += 100000000000
+            score += 10000000000000
         if d in directions_without_potential_deadly_head_on_head_collision:
-            score += 10000000000
+            score += 1000000000000
         if d not in future_escapabilty_dic['sure_death']:
-            score += 1000000000
+            score += 100000000000
         if d in future_escapabilty_dic['sure_life']:
-            score += 100000000
+            score += 10000000000
         if d not in escapabilty_dic['sure_death']:
-            score += 10000000
+            score += 1000000000
         if d in escapabilty_dic['sure_life']:
-            score += 1000000
+            score += 100000000
         if d not in directions_that_lead_to_head_lockdown_min_max:
-            score += 100000
+            score += 10000000
+
+        # until here, safety/defense points
+        # after that, candy
+
+        #kill incentive
+        #point difference needs to be higher than 12000
+        killer_points = killer_scores[d] * 10 * 12000
+        score += killer_points
+
         if closest_apple and data['you']['health'] < 100:
             score += 10000 - distance_to_apple*500
         if True:  # distance to center points
@@ -1324,31 +1433,43 @@ def get_best_move_based_on_current_data(data):
 
 
 def test_alpha_beta(data):
-    for depth in range(5):
+    for depth in range(9):
 
         # TODO aspiration window
+        print("Turn", data["turn"], "depth", depth)
 
         ab_start_time = time.time()
         alpha_beta_results = alpha_beta_best_move(data, time.time() + 10000000, depth)
-        ab_time = time.time() - ab_start_time
+        ab_time = round(time.time() - ab_start_time, 5)
+
+        killer_start_time = time.time()
+        killer_results = killer_best_move(data, time.time() + 10000000, depth)
+        killer_time = round(time.time() - killer_start_time, 5)
 
         min_max_start_time = time.time()
         min_max_results = simple_best_move(data, time.time() + 100000000, depth)
-        min_max_time = time.time() - min_max_start_time
-
-        print("Turn", data["turn"])
+        min_max_time = round(time.time() - min_max_start_time, 5)
 
         ab_time_per_state = "N/A"
         if alpha_beta_state_count != 0:
-            ab_time_per_state = ab_time / alpha_beta_state_count
+            ab_time_per_state = round(ab_time / alpha_beta_state_count, 5)
+
+        killer_time_per_state = "N/A"
+        if kill_state_count != 0:
+            killer_time_per_state = round(killer_time / kill_state_count, 5)
 
         min_max_time_per_state = "N/A"
         if state_count != 0:
             min_max_time_per_state = min_max_time / state_count
 
         print("alpha-beta", alpha_beta_state_count, ab_time, ab_time_per_state, alpha_beta_results)
+        print("killer    ", kill_state_count, killer_time, killer_time_per_state, killer_results[3], killer_results[:3])
         print("min-max   ", state_count, min_max_time, min_max_time_per_state, min_max_results)
+
+        for i in range(3):
+            assert alpha_beta_results[i] == killer_results[i]
 
         assert alpha_beta_results == min_max_results
         assert alpha_beta_state_count <= state_count
+
 

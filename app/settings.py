@@ -6,4 +6,16 @@ TIME_FOR_SIMPLE_ALPHA_BETA = "Uses all remaining time"
 TIME_FOR_EXPANDED_MINIMAX = 0.15
 
 SIMPLE_ALPHA_BETA_DEPTH_LIMIT = 999
+
+
+zero_time = False
+if zero_time:
+    TOTAL_TIME = 0.0
+    BASE_TIME = 0.0
+    TIME_FOR_SIMPLE_ALPHA_BETA = "Uses all remaining time"
+    TIME_FOR_EXPANDED_MINIMAX = 0.0
+
+    SIMPLE_ALPHA_BETA_DEPTH_LIMIT = 999
+
+
 #
