@@ -1430,6 +1430,28 @@ def get_best_move_based_on_current_data(data):
     return random.choice(equivalent_best_moves), move_score_list
 
 
+def i_am_the_longest_by_three_and_not_hungry(data):
+    if len(data['board']['snakes']) == 1:
+        return False
+
+    lengths = []
+    for snake in data['board']['snakes']:
+        if snake != data['you']:
+            lengths.append(len(snake['body']))
+
+    my_length = len(data['you']['body'])
+    my_health = data['you']['health']
+
+    if my_length - 3 < max(lengths):
+        return False
+
+    if my_health < 50:
+        return False
+
+    return True
+
+
+
 def test_alpha_beta(data):
     for depth in range(9):
 
