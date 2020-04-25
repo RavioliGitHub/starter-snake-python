@@ -13,6 +13,7 @@ main_print = True
 def remove_shouts(data):
     for snake in data['board']['snakes']:
         snake.pop('shout', None)
+    data['you'].pop('shout', None)
 
 @bottle.route('/')
 def index():
