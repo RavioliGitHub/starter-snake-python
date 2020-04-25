@@ -25,7 +25,7 @@ class GamePool(object):
         if not self.pool:
             self.init_pool(data)
         if not self.pool['free']:
-            assert False, "No pool space"
+            #assert False, "No pool space"
             # TODO remove before tournament
             return None
         else:
@@ -34,7 +34,7 @@ class GamePool(object):
             return pool_object
 
     def return_object(self, pool_object):
-        assert pool_object in self.pool['busy']
+        #assert pool_object in self.pool['busy']
         self.pool['busy'].remove(pool_object)
         self.pool['free'].append(pool_object)
 

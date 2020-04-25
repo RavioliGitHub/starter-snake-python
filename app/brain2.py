@@ -1147,7 +1147,7 @@ def best_move(data, time_limit):
             elif simple_score == 0.5:
                 pass
             else:
-                assert simple_score == "cancel"
+                #assert simple_score == "cancel"
                 #TODO remove before tournament
                 break
 

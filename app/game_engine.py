@@ -150,7 +150,7 @@ def check_if_update_was_accurate(prediction, actual_data):
     actual_data_copy = copy.deepcopy(actual_data)
     del prediction_copy['board']['food']
     del actual_data_copy['board']['food']
-    assert len(prediction_copy) == len(actual_data_copy), "not same length"
+    #assert len(prediction_copy) == len(actual_data_copy), "not same length"
     #compare_elements(prediction_copy, actual_data_copy)
 
     if not prediction_copy == actual_data_copy:
@@ -165,7 +165,7 @@ def check_if_update_was_accurate(prediction, actual_data):
         pp = pprint.PrettyPrinter(indent=4)
         pp.pprint(result)
         """
-        assert prediction_copy == actual_data_copy
+        #assert prediction_copy == actual_data_copy
 
 
 
@@ -202,9 +202,9 @@ def list_of_reachable_tiles(start, deadly_locations, width, height):
     return visited
 
 def get_played_moves(previous_data, current_data):
-    assert type(previous_data) is dict, previous_data
-    assert type(current_data) is dict, current_data
-    assert type(previous_data['board']['snakes']) is list, previous_data['board']['snakes']
+    #assert type(previous_data) is dict, previous_data
+    #assert type(current_data) is dict, current_data
+    #assert type(previous_data['board']['snakes']) is list, previous_data['board']['snakes']
     moves = []
     current_snakes = current_data['board']['snakes']
     for pre_snake in previous_data['board']['snakes']:
@@ -341,7 +341,7 @@ def get_from_pool_and_copy(original_data):
         if original_snake['id'] == original_data['you']['id']:
             pool_data['you'] = pool_snake
 
-    assert pool_data == original_data, ("\n"+str(original_data)+"\n"+str(pool_data))
+    #assert pool_data == original_data, ("\n"+str(original_data)+"\n"+str(pool_data))
     # TODO remove before tournament
     return pool_data
 
