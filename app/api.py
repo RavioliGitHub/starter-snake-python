@@ -34,6 +34,21 @@ def move_response(move):
         })
     )
 
+def get_response():
+    return HTTPResponse(
+        status=200,
+        headers={
+            "Content-Type": "application/json"
+        },
+        body=json.dumps({
+            "apiversion": "1",
+            "author": "",  # TODO: Your Battlesnake Username
+            "color": "#888888",  # TODO: Personalize
+            "head": "default",  # TODO: Personalize
+            "tail": "default",  # TODO: Personalize
+        })
+    )
+
 def end_response():
     return HTTPResponse(
         status=200

@@ -5,7 +5,7 @@ import brain2
 import time
 import sys
 import Game_object_pool
-from api import ping_response, start_response, move_response, end_response
+from api import ping_response, start_response, move_response, end_response, get_response
 
 # TODO turn back to true before commit
 main_print = True
@@ -31,6 +31,11 @@ def static(path):
     This can be used to return the snake head URL in an API response.
     """
     return bottle.static_file(path, root='static/')
+
+@bottle.get()
+def get():
+    return get_response()
+
 
 @bottle.post('/ping')
 def ping():
