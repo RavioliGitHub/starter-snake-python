@@ -1304,7 +1304,7 @@ def get_best_move_based_on_current_data(data):
     log(data, "##### GET BEST MOVE #####")
 
     start_time = time.time()
-    time_limit = start_time + settings.BASE_TIME
+    time_limit = start_time + data['game']['timeout']/1000.0 - settings.SAFETY_WINDOW
 
     directions_without_direct_death = get_moves_without_direct_death(data)
     log(data, "directions_without_direct_death: " + str(directions_without_direct_death))
