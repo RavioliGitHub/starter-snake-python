@@ -50,7 +50,6 @@ def ping():
 def start():
     global previous_data
     data = bottle.request.json
-    remove_shouts(data)
     previous_data = data
     Game_object_pool.GamePool().init_pool(data)
 
@@ -72,7 +71,6 @@ def move():
     if main_print:
         print("Received move request, unpacking data")
     data = bottle.request.json
-    remove_shouts(data)
     if main_print:
         print("Received move request ", data['turn'])
     my_move_response = get_move_response_string(data)
@@ -99,7 +97,6 @@ def get_move_response_string(data):
 @bottle.post('/end')
 def end():
     data = bottle.request.json
-    remove_shouts(data)
 
     """
     TODO: If your snake AI was stateful,
