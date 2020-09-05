@@ -1,22 +1,12 @@
 import os
-import Game_object_pool
+import random
+
 import cherrypy
-import json
-import time
-import brain2
 
 """
 This is a simple Battlesnake server written in Python.
 For instructions see https://github.com/BattlesnakeOfficial/starter-snake-python/README.md
 """
-
-# TODO turn back to true before commit
-main_print = True
-
-def remove_shouts(data):
-    for snake in data['board']['snakes']:
-        snake.pop('shout', None)
-    data['you'].pop('shout', None)
 
 
 class Battlesnake(object):
@@ -40,16 +30,7 @@ class Battlesnake(object):
         # This function is called everytime your snake is entered into a game.
         # cherrypy.request.json contains information about the game that's about to be played.
         # TODO: Use this function to decide how your snake is going to look on the board.
-
-
-        global previous_data
         data = cherrypy.request.json
-        remove_shouts(data)
-        previous_data = data
-        Game_object_pool.GamePool().init_pool(data)
-
-        print("starting")
-        print(json.dumps(data))
 
         print("START")
         return "ok"
@@ -61,30 +42,14 @@ class Battlesnake(object):
         # This function is called on every turn of a game. It's how your snake decides where to move.
         # Valid moves are "up", "down", "left", or "right".
         # TODO: Use the information in cherrypy.request.json to decide your next move.
-        if main_print:
-            print("Received move request, unpacking data")
-            data = cherrypy.request.json
-        remove_shouts(data)
-        if main_print:
-            print("Received move request ", data['turn'])
-        my_move_response = self.get_move_response_string(data)
-        return {"move": my_move_response}
+        data = cherrypy.request.json
 
-    state_list = []
-    def get_move_response_string(self, data):
-        start_time = time.time()
+        # Choose a random direction to move in
+        possible_moves = ["up", "down", "left", "right"]
+        move = random.choice(possible_moves)
 
-        response2 = brain2.get_best_move_based_on_current_data(data)
-
-        if type(response2) == str:
-            response2 = (response2, [])
-
-        my_move_response2, move_score_list2 = response2
-
-        if main_print:
-            print("response time", time.time() - start_time, "name", data['you']['name'])
-            print("Responded to move request ", data['turn'], " with ", my_move_response2, move_score_list2)
-        return my_move_response2
+        print("MOVE: {move}")
+        return {"move": move}
 
     @cherrypy.expose
     @cherrypy.tools.json_in()
@@ -94,7 +59,6 @@ class Battlesnake(object):
         data = cherrypy.request.json
 
         print("END")
-        print(json.dumps(data))
         return "ok"
 
 
