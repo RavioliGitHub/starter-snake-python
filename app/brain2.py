@@ -114,9 +114,9 @@ directions = ['up', 'down', 'left', 'right']
 
 def neighbour_tile(direction, current_position):
     if direction == 'up':
-        return {'x': current_position['x'], 'y': current_position['y'] - 1}
-    elif direction == 'down':
         return {'x': current_position['x'], 'y': current_position['y'] + 1}
+    elif direction == 'down':
+        return {'x': current_position['x'], 'y': current_position['y'] - 1}
     elif direction == 'left':
         return {'x': current_position['x'] - 1, 'y': current_position['y']}
     elif direction == 'right':
