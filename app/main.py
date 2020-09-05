@@ -32,8 +32,9 @@ def static(path):
     """
     return bottle.static_file(path, root='static/')
 
-@bottle.get()
+@bottle.get('/')
 def get():
+    print("starting get response")
     return get_response()
 
 
